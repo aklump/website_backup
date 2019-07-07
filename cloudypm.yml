@@ -1,0 +1,5 @@
+name: aklump/website_backup
+clone_from: https://github.com/aklump/website_backup
+entry_script: website_backup.sh
+entry_symlink: website_backup
+on_install: init

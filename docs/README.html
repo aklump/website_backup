@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Website Backup</title>
+  <link href="search/tipuesearch.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body class="page--readme">
+<header>
+  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div></header>
+<section class="sub-header">
+  <div class="breadcrumbs"><a href="index.html">Index</a>
+         &raquo
+      </div>      <div class="search__wrapper">
+  <form action="search--results.html">
+    <input type="text" class="search-input" name="q" id="tipue_search_input" autocomplete="off" required>
+  </form>
+</div>
+  </section>
+
+
+<h1>Website Backup</h1>
+
+<section>
+
+<p><img src="images/website-backup.jpg" alt="website_backup" /></p>
+
+<h2>Summary</h2>
+
+<p>A script to perform routine backups of critical website files and database.</p>
+
+<p><strong>Visit <a href="https://aklump.github.io/website_backup">https://aklump.github.io/website_backup</a> for full documentation.</strong></p>
+
+<h2>Quick Start</h2>
+
+<ul>
+<li>Install in your repository root using <code>cloudy pm-install aklump/website_backup</code></li>
+<li>Open <em>bin/config/website_backup.yml</em> and modify as needed.</li>
+<li>Open <em>bin/config/website_backup.local.yml</em> and ...; be sure to ignore this file in SCM.</li>
+</ul>
+
+<h2>Requirements</h2>
+
+<p>You must have <a href="https://github.com/aklump/cloudy">Cloudy</a> installed on your system to install this package.</p>
+
+<h2>Installation</h2>
+
+<p>The installation script above will generate the following structure where <code>.</code> is your repository root.</p>
+
+<pre><code>.
+├── bin
+│   ├── website_backup -&gt; ../opt/website_backup/website_backup.sh
+│   └── config
+│       ├── website_backup.yml
+│       └── website_backup.local.yml
+├── opt
+│   ├── cloudy
+│   └── aklump
+│       └── website_backup
+└── {public web root}
+</code></pre>
+
+<h3>To Update</h3>
+
+<ul>
+<li>Update to the latest version from your repo root: <code>cloudy pm-update aklump/website_backup</code></li>
+</ul>
+
+<h2>Configuration Files</h2>
+
+<table>
+<thead>
+<tr>
+  <th>Filename</th>
+  <th>Description</th>
+  <th>VCS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><em>website_backup.yml</em></td>
+  <td>Configuration shared across all server environments: prod, staging, dev</td>
+  <td>yes</td>
+</tr>
+<tr>
+  <td><em>website_backup.local.yml</em></td>
+  <td>Configuration overrides for a single environment; not version controlled.</td>
+  <td>no</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Custom Configuration</h3>
+
+<ul>
+<li>lorem</li>
+<li>ipsum</li>
+</ul>
+
+<h2>Usage</h2>
+
+<ul>
+<li>To see all commands use <code>./bin/website_backup</code></li>
+</ul>
+
+<h2>Contributing</h2>
+
+<p>If you find this project useful... please consider <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4E5KZHDQCEUV8&amp;item_name=Gratitude%20for%20">making a donation</a>.</p>
+</section>
+
+<div class="search__results">
+  <div id="tipue_search_content"></div>
+</div>
+
+<footer>
+  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div>  
+  <div id="footer-legaleeze">
+    <p class="legaleeze center">Version: 0.0.1 &bull; Last Updated: Sat, 06 Jul 2019 13:00:26 -0700</p>
+  </div>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="search/tipuesearch_content.js"></script>
+  <script src="search/tipuesearch_set.js"></script>
+  <script src="search/tipuesearch.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#tipue_search_input').tipuesearch()
+    })
+  </script>
+<script src="js/core.js"></script>
+</body>
+</html>
+

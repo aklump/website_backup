@@ -1,0 +1,20 @@
+#The region for the bucket.
+aws_region: us-west-1
+
+#The name of the destination bucket
+aws_bucket: BUCKET
+
+#The filename of the backup object that will be uploaded to S3.  The current
+#datetime will be appended to this name.  You may want to use the host portion
+#of your website url that is being backed up.
+object_name: OBJECT_NAME
+
+#List of file/folder paths to include in the backup, preceed a path with ! to
+#indicate the path should be excluded.  These may be absolute or relative to the
+#app root.  If you are using a database handler, the dumpfile will be added to
+#the manifest automatically for you.
+manifest:
+  - web/sites/default/files/
+  - "!web/sites/default/files/styles/"
+  - "!web/sites/default/files/js/"
+  - "!web/sites/default/files/css/"
