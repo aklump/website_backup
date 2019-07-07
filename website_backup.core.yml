@@ -1,4 +1,4 @@
-title: "Website Backup"
+title: 'Website Backup'
 config_path_base: ../../..
 additional_config:
   - ../../../bin/config/website_backup.yml
@@ -23,19 +23,9 @@ translate:
     en: null
 name: 'Website Backup'
 description: 'A script to perform routine backups of critical website files and database.'
-version: 0.0.1
+version: 0.0.2
 author: 'Aaron Klump <sourcecode@intheloftstudios.com>'
-
-#Keep only the most recent N backup objects, after which they should be deleted.
 backups_to_store: 7
-
-#For websites that use databases, define the handler and options to use.  The
-#current available handlers are: loft_deploy or null (for no db backup).
 database_handler: loft_deploy
-
-#The name of the dumpfile, this will be given to the handler to use as it sees
-#fit and may not represent the final dump filename.
 database_dumpfile: backup
-
-bin:
-#  loft_deploy: /path/to/loft_deploy
+bin: null
