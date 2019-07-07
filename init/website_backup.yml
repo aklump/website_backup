@@ -18,3 +18,19 @@ manifest:
   - "!web/sites/default/files/styles/"
   - "!web/sites/default/files/js/"
   - "!web/sites/default/files/css/"
+
+database:
+  # Define which database export handler to use; one of: loft_deploy, mysqldump.
+  handler: mysqldump
+  dumpfile: backup
+
+  # To reduce the size of your dumpfile, you can specify any number of "cache
+  # tables", or tables with ephemeral content that can be rebuilt by your
+  # application. These cache_tables will have their STRUCTURE ONLY exported and
+  # the contents of these tables will not exist in the dump file.
+  cache_tables:
+    - cache
+    - cache_*
+    - search_index
+    - node_access
+    - watchdog

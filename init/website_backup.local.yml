@@ -1,2 +1,10 @@
 aws_access_key_id: KEY
 aws_secret_access_key: SECRET
+
+# Fill in these credentials if using the database_handler `mysqldump`.
+database:
+  host: localhost
+  port: PORT
+  name: NAME
+  user: USER
+  password: PASSWORD

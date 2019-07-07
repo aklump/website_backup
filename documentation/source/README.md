@@ -15,9 +15,12 @@ A script to perform routine backups of critical website files and database.  Hig
 
 ## Quick Start
 
-- Install in your repository root using `cloudy pm-install aklump/backup`
+- Install in your repository root using `cloudy pm-install aklump/website_backup`
 - Open _bin/config/website_backup.yml_ and modify as needed.
 - Open _bin/config/website_backup.local.yml_ and ...; be sure to ignore this file in SCM as it contains your AWS credentials.
+- Create a cron job that executes _bin/website_backup_ at the desired interval:
+  
+    
 
 ## Requirements
 
@@ -42,7 +45,7 @@ The installation script above will generate the following structure where `.` is
     
 ### To Update
 
-- Update to the latest version from your repo root: `cloudy pm-update aklump/backup`
+- Update to the latest version from your repo root: `cloudy pm-update aklump/website_backup`
 
 ## Configuration Files
 

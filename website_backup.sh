@@ -55,17 +55,19 @@ case $command in
       mkdir "$stage_dir" || fail_because "Could not create the local object directory: $PWD/$stage_dir"
 
       # Allow the database handler add what it wants to the $stage_dir.
-      eval $(get_config database_handler)
-      eval $(get_config database_dumpfile "database-backup")
+      eval $(get_config_as "database_handler" "database.handler")
+      eval $(get_config_as "database_dumpfile" "database.dumpfile" "database-backup")
       if [[ "$database_handler" ]]; then
-        echo_heading "Exporting database"
+        list_clear
+        echo_heading "Exporting database (via $database_handler)"
         source "$ROOT/plugins/db/$database_handler.sh" "$stage_dir"
         [ $? -ne 0 ] && exit_with_failure
-
+        echo_green_list
       fi
 
       # Copy the included files.
       echo_heading "Cherry-picking files"
+      list_clear
       for path in "${manifest[@]}"; do
 
         # Expand any globs in the path.
@@ -85,6 +87,7 @@ case $command in
           [[ "$destination_dir" ]] && [[ ! -d "$stage_dir/$destination_dir" ]] && mkdir -p "$stage_dir/$destination_dir"
 
           # Copy files
+          list_add_item $path
           if [ -f "$path" ]; then
             cp "$path" "$stage_dir/$path" || fail_because "Could not stage \"$path\"."
           elif [ -d "$path" ]; then
@@ -111,6 +114,7 @@ case $command in
 
         has_failed && exit_with_failure
       done
+      echo_green_list
 
       # Compress the file.
       object="$stage_dir.tar.gz"
