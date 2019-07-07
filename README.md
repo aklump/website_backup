@@ -4,7 +4,12 @@
 
 ## Summary
 
-A script to perform routine backups of critical website files and database.
+A script to perform routine backups of critical website files and database.  Highlights include:
+
+* Cloud backup to AWS S3.
+* Automatically deletes older backups.
+* YAML based configuration.
+* Easily cherry-pick files or folders to include in backup.
 
 **Visit <https://aklump.github.io/website_backup> for full documentation.**
 
@@ -12,7 +17,7 @@ A script to perform routine backups of critical website files and database.
 
 - Install in your repository root using `cloudy pm-install aklump/website_backup`
 - Open _bin/config/website_backup.yml_ and modify as needed.
-- Open _bin/config/website_backup.local.yml_ and ...; be sure to ignore this file in SCM.
+- Open _bin/config/website_backup.local.yml_ and ...; be sure to ignore this file in SCM as it contains your AWS credentials.
 
 ## Requirements
 

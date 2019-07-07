@@ -9,7 +9,7 @@
 
 <body class="page--readme">
 <header>
-  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div></header>
+  <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div></header>
 <section class="sub-header">
   <div class="breadcrumbs"><a href="index.html">Index</a>
          &raquo
@@ -29,7 +29,14 @@
 
 <h2>Summary</h2>
 
-<p>A script to perform routine backups of critical website files and database.</p>
+<p>A script to perform routine backups of critical website files and database.  Highlights include:</p>
+
+<ul>
+<li>Cloud backup to AWS S3.</li>
+<li>Automatically deletes older backups.</li>
+<li>YAML based configuration.</li>
+<li>Easily cherry-pick files or folders to include in backup.</li>
+</ul>
 
 <p><strong>Visit <a href="https://aklump.github.io/website_backup">https://aklump.github.io/website_backup</a> for full documentation.</strong></p>
 
@@ -38,7 +45,7 @@
 <ul>
 <li>Install in your repository root using <code>cloudy pm-install aklump/website_backup</code></li>
 <li>Open <em>bin/config/website_backup.yml</em> and modify as needed.</li>
-<li>Open <em>bin/config/website_backup.local.yml</em> and ...; be sure to ignore this file in SCM.</li>
+<li>Open <em>bin/config/website_backup.local.yml</em> and ...; be sure to ignore this file in SCM as it contains your AWS credentials.</li>
 </ul>
 
 <h2>Requirements</h2>
@@ -115,9 +122,9 @@
 </div>
 
 <footer>
-  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div>  
+  <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.1 &bull; Last Updated: Sat, 06 Jul 2019 13:00:26 -0700</p>
+    <p class="legaleeze center">Version: 0.0.2 &bull; Last Updated: Sat, 06 Jul 2019 18:03:49 -0700</p>
   </div>
 </footer>
 

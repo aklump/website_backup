@@ -2,14 +2,14 @@
 
 <html>
 <head>
-  <title></title>
+  <title>Database Handlers</title>
   <link href="search/tipuesearch.css" rel="stylesheet">
   <link href="style.css" rel="stylesheet">
 </head>
 
-<body class="">
+<body class="page--db_handler">
 <header>
-  <div class="pager"><a href="javascript:void(0)" class="prev ">&laquo;</a><a href="index.html" class="index pager__book-title"></a><a href="javascript:void(0)" class="next ">&raquo;</a></div></header>
+  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="README.html" class="next readme">Website Backup&raquo;</a></div></header>
 <section class="sub-header">
   <div class="breadcrumbs"><a href="index.html">Index</a>
          &raquo
@@ -21,9 +21,15 @@
   </section>
 
 
-<h1></h1>
+<h1>Database Handlers</h1>
 
 <section>
+
+<ul>
+<li>Given an id such as <code>my_handler</code>, you must create <em>plugins/db/my_handler.sh</em>.</li>
+<li>It must provide a backup of the database using whatever config it wants and place it in <code>$stage_dir</code>.</li>
+<li>It must use <code>$database_dumpfile</code> in the output filename.</li>
+</ul>
 </section>
 
 <div class="search__results">
@@ -31,7 +37,7 @@
 </div>
 
 <footer>
-  <div class="pager"><a href="javascript:void(0)" class="prev ">&laquo;</a><a href="index.html" class="index pager__book-title"></a><a href="javascript:void(0)" class="next ">&raquo;</a></div>  
+  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="README.html" class="next readme">Website Backup&raquo;</a></div>  
   <div id="footer-legaleeze">
     <p class="legaleeze center">Version: 0.0.2 &bull; Last Updated: Sat, 06 Jul 2019 18:03:49 -0700</p>
   </div>
