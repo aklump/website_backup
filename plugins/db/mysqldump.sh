@@ -43,7 +43,7 @@ if [ ${#cache_tables[@]} -gt 0 ]; then
   table_where_clause=$(printf " AND table_name NOT LIKE '%s'" "${cache_tables[@]}")
   table_where_clause="${table_where_clause//\*/%}"
   tables=($($mysql $connection_options "$name" -s -N -e "SELECT table_name FROM information_schema.tables WHERE table_schema = '$name'$table_where_clause"))
-  list_add_item "data fo ${#tables[@]} table(s)."
+  list_add_item "data for ${#tables[@]} table(s)."
 
   # Create a file, and export the CREATE statements for all tables.
   $mysqldump $connection_options $shared_options --no-data "$name" --result-file="$path_to_output" || fail_because "mysqldump structure export failed."
