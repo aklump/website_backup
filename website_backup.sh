@@ -62,6 +62,7 @@ case $command in
         echo_heading "Exporting database (via $database_handler)"
         source "$ROOT/plugins/db/$database_handler.sh" "$stage_dir"
         [ $? -ne 0 ] && exit_with_failure
+        list_add_item "$(echo_elapsed) seconds"
         echo_green_list
       fi
 
@@ -114,15 +115,20 @@ case $command in
 
         has_failed && exit_with_failure
       done
+      list_add_item "$(echo_elapsed) seconds"
       echo_green_list
 
       # Compress the file.
+      echo_heading "Compressing object"
       object="$stage_dir.tar.gz"
       tar -czf "$object" "$stage_dir" || fail_because "Could not compress object."
+      list_clear
+      list_add_item "$(echo_elapsed) seconds"
+      echo_green_list
 
       # Send to the cloud.
       eval $(get_config backups_to_store 10)
-      echo_heading "Sending to bucket \"${aws_bucket}\" at S3"
+      echo_heading "Sending to bucket \"${aws_bucket}\" on S3"
       export AWS_ACCESS_KEY_ID
       export AWS_SECRET_ACCESS_KEY
       result=$(php "$ROOT/amazon_s3.php" "$aws_region" "$aws_bucket" "$object" "$PWD/$object" "$backups_to_store")
