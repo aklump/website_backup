@@ -21,7 +21,7 @@ exit_with_failure_if_empty_config "database.user" --as=user
 exit_with_failure_if_empty_config "database.password" --as=password
 exit_with_failure_if_empty_config "database.name" --as=name
 
-path_to_output="$stage_dir/$database_dumpfile.$name.sql"
+path_to_output="$path_to_stage/$database_dumpfile.$name.sql"
 shared_options="--lock-tables --single-transaction"
 
 # Create the .cnf file with connection information.

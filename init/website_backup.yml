@@ -9,10 +9,11 @@ aws_bucket: BUCKET
 #of your website url that is being backed up.
 object_name: OBJECT_NAME
 
-#List of file/folder paths to include in the backup, preceed a path with ! to
-#indicate the path should be excluded.  These may be absolute or relative to the
-#app root.  If you are using a database handler, the dumpfile will be added to
-#the manifest automatically for you.
+#List of relative file/folder paths to include in the backup.  Preceed a path
+#with ! to indicate the path should be excluded.  These MUST be relative to the
+#value of "path_to_app", which can be overridden in this file if the default is
+#not appropriate.  If you are using a database handler, the dumpfile will be
+#added to the manifest automatically for you.
 manifest:
   - web/sites/default/files/
   - "!web/sites/default/files/styles/"

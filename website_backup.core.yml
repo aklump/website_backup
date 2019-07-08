@@ -1,5 +1,8 @@
 title: 'Website Backup'
 config_path_base: ../../..
+
+#This is the basepath for relative files defined in manifest
+path_to_app: .
 additional_config:
   - ../../../bin/config/website_backup.yml
   - ../../../bin/config/website_backup.local.yml
