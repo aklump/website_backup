@@ -43,9 +43,10 @@
 <h2>Quick Start</h2>
 
 <ul>
-<li>Install in your repository root using <code>cloudy pm-install aklump/backup</code></li>
+<li>Install in your repository root using <code>cloudy pm-install aklump/website_backup</code></li>
 <li>Open <em>bin/config/website_backup.yml</em> and modify as needed.</li>
 <li>Open <em>bin/config/website_backup.local.yml</em> and ...; be sure to ignore this file in SCM as it contains your AWS credentials.</li>
+<li>Create a cron job that executes <em>bin/website_backup</em> at the desired interval:</li>
 </ul>
 
 <h2>Requirements</h2>
@@ -72,7 +73,7 @@
 <h3>To Update</h3>
 
 <ul>
-<li>Update to the latest version from your repo root: <code>cloudy pm-update aklump/backup</code></li>
+<li>Update to the latest version from your repo root: <code>cloudy pm-update aklump/website_backup</code></li>
 </ul>
 
 <h2>Configuration Files</h2>
@@ -124,7 +125,7 @@
 <footer>
   <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.3 &bull; Last Updated: Sat, 06 Jul 2019 18:10:14 -0700</p>
+    <p class="legaleeze center">Version: 0.0.4 &bull; Last Updated: Mon, 08 Jul 2019 05:09:22 -0700</p>
   </div>
 </footer>
 
