@@ -1,0 +1,16 @@
+manifest:
+  - web/sites/default/files/
+  - "!web/sites/default/files/styles/"
+  - "!web/sites/default/files/js/"
+  - "!web/sites/default/files/css/"
+  - "!web/sites/default/files/xmlsitemap/"
+  - private/default/files/
+  - "!private/default/files/tmp"
+
+database:
+  cache_tables:
+    - cache
+    - cache_*
+    - search_index
+    - node_access
+    - watchdog
