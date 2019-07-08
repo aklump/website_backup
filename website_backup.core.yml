@@ -1,7 +1,5 @@
 title: 'Website Backup'
 config_path_base: ../../..
-
-#This is the basepath for relative files defined in manifest
 path_to_app: .
 additional_config:
   - ../../../bin/config/website_backup.yml
@@ -26,7 +24,7 @@ translate:
     en: null
 name: 'Website Backup'
 description: 'A script to perform routine backups of critical website files and database.'
-version: 0.0.5
+version: 0.0.6
 author: 'Aaron Klump <sourcecode@intheloftstudios.com>'
 backups_to_store: 14
 bin: null
