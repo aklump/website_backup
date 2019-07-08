@@ -23,7 +23,7 @@ translate:
     en: null
 name: 'Website Backup'
 description: 'A script to perform routine backups of critical website files and database.'
-version: 0.0.4
+version: 0.0.5
 author: 'Aaron Klump <sourcecode@intheloftstudios.com>'
 backups_to_store: 14
 bin: null
