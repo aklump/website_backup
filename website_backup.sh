@@ -63,7 +63,7 @@ case $command in
       # Allow the database handler add what it wants to the $path_to_stage.
       eval $(get_config_as "database_handler" "database.handler")
       eval $(get_config_as "database_dumpfile" "database.dumpfile" "database-backup")
-      if [[ "$database_handler" ]]; then
+      if [[ "$database_handler" ]] && (has_option 'database' || ! has_option 'files'); then
         list_clear
         echo_heading "Exporting database (via $database_handler)"
         source "$ROOT/plugins/db/$database_handler.sh" "$path_to_stage"
@@ -73,85 +73,102 @@ case $command in
       fi
 
       # Copy the included files.
-      echo_heading "Cherry-picking files"
-      list_clear
-      for path in "${manifest[@]}"; do
+      if has_option 'files' || ! has_option 'database'; then
+        echo_heading "Cherry-picking files"
+        list_clear
+        for path in "${manifest[@]}"; do
 
-        # Do not allow absolute paths in the manifest.
-        if [[ "${path:0:1}" == '/' ]] || [[ "${path:0:2}" == '!/' ]]; then
-          write_log_debug "The manifest item \"$path\" should not begin with a slash, as this indicates an absolute path.  Make sure that you only include relative paths, relative to \"$path_to_app\""
-          fail_because "Incorrect manifest item \"$path\". Only paths relative to config var \"path_to_app\" are allowed in the manifest."
+          # Do not allow absolute paths in the manifest.
+          if [[ "${path:0:1}" == '/' ]] || [[ "${path:0:2}" == '!/' ]]; then
+            write_log_debug "The manifest item \"$path\" should not begin with a slash, as this indicates an absolute path.  Make sure that you only include relative paths, relative to \"$path_to_app\""
+            fail_because "Incorrect manifest item \"$path\". Only paths relative to config var \"path_to_app\" are allowed in the manifest."
+          fi
+
+          # For includes, make sure the source files exists.
+          if ! has_failed && [[ "${path:0:1}" != '!' ]]; then
+
+            # Expand any globs in the path and calculate absolute path.
+            path_to_source="$(path_resolve "$path_to_app" $path)"
+            [ -e "$path_to_source" ] || fail_because "Manifest includes \"$path_to_source\", which does not exist."
+
+            # Ensure the destination file structure exists in the object.
+            destination_dir="$path"
+            if [ -f "$path_to_source" ]; then
+              destination_dir="$(dirname $path)/"
+            fi
+            [[ "$destination_dir" ]] && [[ ! -d "$path_to_stage/$destination_dir" ]] && mkdir -p "$path_to_stage/$destination_dir"
+
+            # Copy files
+            list_add_item $path
+            if [ -f "$path_to_source" ]; then
+              cp "$path_to_source" "$path_to_stage/$path" || fail_because "Could not stage \"$path\"."
+            elif [ -d "$path_to_source" ]; then
+              rsync -a "$path_to_source/" "$path_to_stage/$path/" || fail_because "Could not stage \"$path\"."
+            fi
+          fi
+
+          has_failed && exit_with_failure
+        done
+
+        # Remove the excluded files.
+        for path in "${manifest[@]}"; do
+          # Remove the excluded files if they exist.
+          if [[ "${path:0:1}" == '!' ]]; then
+            remove="$path_to_stage/${path:1}"
+
+            # Expand any globs in the path.
+            if [ -e "$remove" ]; then
+              rm -r "$remove" || fail_because "Could not exclude \"$remove\" from stage."
+            fi
+          fi
+
+          has_failed && exit_with_failure
+        done
+        list_add_item "$(echo_elapsed) seconds"
+        echo_blue_list
+      fi
+
+      # Save locally only due to --local
+      if has_option 'local'; then
+        object_basename="$object_name"
+        path_to_object="$(dirname $path_to_stage)/$object_basename"
+        path_to_local_save=$(get_option 'local')
+        [ -d "$path_to_local_save" ] || fail_because "The directory specified by the \"local\" option must already exist; it does not."
+        if ! has_failed; then
+          list_clear
+          echo_heading "Saving locally"
+          list_add_item "$path_to_local_save"
+          mv "$path_to_object" "$path_to_local_save" || fail_because "Could not move to local: $path_to_local_save"
+          echo_blue_list
         fi
 
-        # For includes, make sure the source files exists.
-        if ! has_failed && [[ "${path:0:1}" != '!' ]]; then
+      # Push to cloud.
+      else
+        # Compress the file.
+        echo_heading "Compressing object"
+        object_basename="$object_name.tar.gz"
+        path_to_object="$(dirname $path_to_stage)/$object_basename"
+        list_clear
 
-          # Expand any globs in the path and calculate absolute path.
-          path_to_source="$(path_resolve "$path_to_app" $path)"
-          [ -e "$path_to_source" ] || fail_because "Manifest includes \"$path_to_source\", which does not exist."
+        (cd "$(dirname "$path_to_object")" && tar -czf "$object_basename" "$object_name" ) || fail_because "Could not compress object."
+        list_add_item "$(echo_elapsed) seconds"
+        echo_blue_list
 
-          # Ensure the destination file structure exists in the object.
-          destination_dir="$path"
-          if [ -f "$path_to_source" ]; then
-            destination_dir="$(dirname $path)/"
-          fi
-          [[ "$destination_dir" ]] && [[ ! -d "$path_to_stage/$destination_dir" ]] && mkdir -p "$path_to_stage/$destination_dir"
+        # Send to the cloud.
+        eval $(get_config backups_to_store 10)
+        echo_heading "Sending to bucket \"${aws_bucket}\" on S3"
+        export AWS_ACCESS_KEY_ID
+        export AWS_SECRET_ACCESS_KEY
+        result=$(php "$ROOT/amazon_s3.php" "$aws_region" "$aws_bucket" "$object_basename" "$path_to_object" "$backups_to_store")
+        [ $? -ne 0 ] && fail_because "$result"
 
-          # Copy files
-          list_add_item $path
-          if [ -f "$path_to_source" ]; then
-            cp "$path_to_source" "$path_to_stage/$path" || fail_because "Could not stage \"$path\"."
-          elif [ -d "$path" ]; then
-            rsync -a "$path_to_source/" "$path_to_stage/$path/" || fail_because "Could not stage \"$path\"."
-          fi
-        fi
-
+        # Cleanup the local object file.
+        rm "$path_to_object" || fail_because "Could not remove local object directory: $object"
         has_failed && exit_with_failure
-      done
+        rm -r "$path_to_stage" || fail_because "Could not remove local object directory: $path_to_stage"
+      fi
 
-      # Remove the excluded files.
-      for path in "${manifest[@]}"; do
-        # Remove the excluded files if they exist.
-        if [[ "${path:0:1}" == '!' ]]; then
-          remove="$path_to_stage/${path:1}"
-
-          # Expand any globs in the path.
-          if [ -e "$remove" ]; then
-            rm -r "$remove" || fail_because "Could not exclude \"$remove\" from stage."
-          fi
-        fi
-
-        has_failed && exit_with_failure
-      done
-      list_add_item "$(echo_elapsed) seconds"
-      echo_blue_list
-
-      # Compress the file.
-      echo_heading "Compressing object"
-      object_basename="$object_name.tar.gz"
-      path_to_object="$(dirname $path_to_stage)/$object_basename"
-      list_clear
-
-      (cd "$(dirname "$path_to_object")" && tar -czf "$object_basename" "$object_name" ) || fail_because "Could not compress object."
-      list_add_item "$(echo_elapsed) seconds"
-      echo_blue_list
-
-      # Send to the cloud.
-      eval $(get_config backups_to_store 10)
-      echo_heading "Sending to bucket \"${aws_bucket}\" on S3"
-      export AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY
-      result=$(php "$ROOT/amazon_s3.php" "$aws_region" "$aws_bucket" "$object_basename" "$path_to_object" "$backups_to_store")
-      [ $? -ne 0 ] && fail_because "$result"
-
-
-      # Cleanup the local object stage and file.
-      rm "$path_to_object" || fail_because "Could not remove local object directory: $object"
       has_failed && exit_with_failure
-
-      rm -r "$path_to_stage" || fail_because "Could not remove local object directory: $path_to_stage"
-      has_failed && exit_with_failure
-
       exit_with_success_elapsed "Backup completed"
     ;;
 
