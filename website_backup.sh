@@ -159,11 +159,12 @@ case $command in
         eval $(get_config backups_to_store 10)
         echo_heading "Sending to bucket \"${aws_bucket}\" on S3"
         list_add_item "using key: ...$(echo $AWS_ACCESS_KEY_ID | tail -c 6)"
+        list_add_item "object: $object_basename"
+        echo_blue_list
         export AWS_ACCESS_KEY_ID
         export AWS_SECRET_ACCESS_KEY
         result=$(php "$ROOT/amazon_s3.php" "$aws_region" "$aws_bucket" "$object_basename" "$path_to_object" "$backups_to_store")
         [ $? -ne 0 ] && fail_because "$result"
-        echo_blue_list
 
         # Cleanup the local object file.
         rm "$path_to_object" || fail_because "Could not remove local object directory: $object"
