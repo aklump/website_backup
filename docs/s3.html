@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Setting Up S3</title>
+  <link href="search/tipuesearch.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body class="page--s3">
+<header>
+  <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="README.html" class="next readme">Website Backup&raquo;</a></div></header>
+<section class="sub-header">
+  <div class="breadcrumbs"><a href="index.html">Index</a>
+         &raquo
+      </div>      <div class="search__wrapper">
+  <form action="search--results.html">
+    <input type="text" class="search-input" name="q" id="tipue_search_input" autocomplete="off" required>
+  </form>
+</div>
+  </section>
+
+
+<h1>Setting Up S3</h1>
+
+<section>
+
+<ol>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/gsg/SigningUpforS3.html">Create an account</a> and login.</li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html">Create a bucket</a> to hold the backups.</li>
+<li><p><a href="https://console.aws.amazon.com/iam/home#/policies">Create an access policy</a> using something like the following, replacing <code>BUCKET</code> with the bucket name.</p>
+
+<pre><code>{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObjectAcl",
+                "s3:DeleteObject",
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::BUCKET/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::BUCKET"
+            ]
+        }
+    ]
+}
+</code></pre></li>
+<li><p><a href="https://console.aws.amazon.com/iam/home#/home">Create a dedicated user</a> to run the script.</p></li>
+<li>Add that policy to the user.<br />
+<img src="images/add-permissions.jpg" alt="Add permissions to user" />
+<img src="images/attach.jpg" alt="Attach" /></li>
+</ol>
+</section>
+
+<div class="search__results">
+  <div id="tipue_search_content"></div>
+</div>
+
+<footer>
+  <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="README.html" class="next readme">Website Backup&raquo;</a></div>  
+  <div id="footer-legaleeze">
+    <p class="legaleeze center">Version: 0.0.9 &bull; Last Updated: Tue, 09 Jul 2019 21:28:29 -0700</p>
+  </div>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="search/tipuesearch_content.js"></script>
+  <script src="search/tipuesearch_set.js"></script>
+  <script src="search/tipuesearch.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#tipue_search_input').tipuesearch()
+    })
+  </script>
+<script src="js/core.js"></script>
+</body>
+</html>
+
