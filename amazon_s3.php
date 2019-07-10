@@ -3,6 +3,8 @@
 /**
  * @file
  * Script to put a object to an S3 bucket and purge older objects.
+ *
+ * @link https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html
  */
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -24,10 +26,6 @@ try {
     'Bucket' => $aws_bucket,
     'Key' => $object,
     'Body' => fopen($path_to_object, 'r'),
-
-    // TODO Handle the correct access.
-    // https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html.
-    'ACL' => 'public-read',
   ]);
 
   // Purge any extra files.
