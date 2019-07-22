@@ -1,7 +1,9 @@
-#The region for the bucket.
+#The region for the bucket.  This can be found by looking in the ULR
+##when viewing the bucket at
+##https://s3.console.aws.amazon.com/s3/buckets/{bucket}
 aws_region: us-west-1
 
-#The name of the destination bucket
+#The name of the destination bucket.
 aws_bucket: BUCKET
 
 #The filename of the backup object that will be uploaded to S3.  The current
