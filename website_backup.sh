@@ -17,7 +17,7 @@ function on_pre_config() {
 }
 
 # Begin Cloudy Bootstrap
-s="${BASH_SOURCE[0]}";while [ -h "$s" ];do dir="$(cd -P "$(dirname "$s")" && pwd)";s="$(readlink "$s")";[[ $s != /* ]] && s="$dir/$s";done;r="$(cd -P "$(dirname "$s")" && pwd)";source "$r/../../cloudy/cloudy/cloudy.sh";[[ "$ROOT" != "$r" ]] && echo "$(tput setaf 7)$(tput setab 1)Bootstrap failure, cannot load cloudy.sh$(tput sgr0)" && exit 1
+s="${BASH_SOURCE[0]}";while [[ -h "$s" ]];do dir="$(cd -P "$(dirname "$s")" && pwd)";s="$(readlink "$s")";[[ $s != /* ]] && s="$dir/$s";done;r="$(cd -P "$(dirname "$s")" && pwd)";source "$r/../../cloudy/cloudy/cloudy.sh";[[ "$ROOT" != "$r" ]] && echo "$(tput setaf 7)$(tput setab 1)Bootstrap failure, cannot load cloudy.sh$(tput sgr0)" && exit 1
 # End Cloudy Bootstrap
 
 # Input validation.
@@ -67,7 +67,7 @@ case $command in
         list_clear
         echo_heading "Exporting database (via $database_handler)"
         source "$ROOT/plugins/db/$database_handler.sh" "$path_to_stage"
-        [ $? -ne 0 ] && exit_with_failure
+        [[ $? -ne 0 ]] && exit_with_failure
         list_add_item "$(echo_elapsed) seconds"
         echo_blue_list
       fi
@@ -89,21 +89,21 @@ case $command in
 
             # Expand any globs in the path and calculate absolute path.
             path_to_source="$(path_resolve "$path_to_app" $path)"
-            [ -e "$path_to_source" ] || fail_because "Manifest includes \"$path_to_source\", which does not exist."
+            [[ -e "$path_to_source" ]] || fail_because "Manifest includes \"$path_to_source\", which does not exist."
 
             # Ensure the destination file structure exists in the object.
             destination_dir="$path"
-            if [ -f "$path_to_source" ]; then
+            if [[ -f "$path_to_source" ]]; then
               destination_dir="$(dirname $path)/"
             fi
             [[ "$destination_dir" ]] && [[ ! -d "$path_to_stage/$destination_dir" ]] && mkdir -p "$path_to_stage/$destination_dir"
 
             # Copy files
             list_add_item $path
-            if [ -f "$path_to_source" ]; then
-              cp "$path_to_source" "$path_to_stage/$path" || fail_because "Could not stage \"$path\"."
-            elif [ -d "$path_to_source" ]; then
-              rsync -a "$path_to_source/" "$path_to_stage/$path/" || fail_because "Could not stage \"$path\"."
+            if [[ -f "$path_to_source" ]]; then
+              cp "$path_to_source" "$path_to_stage/$path" || fail_because "Could not stage \"$path\""
+            elif [[ -d "$path_to_source" ]]; then
+              mkdir -p "$path_to_stage/$path/" && rsync -a "$path_to_source/" "$path_to_stage/$path/" || fail_because "Could not stage \"$path\""
             fi
           fi
 
@@ -117,7 +117,7 @@ case $command in
             remove="$path_to_stage/${path:1}"
 
             # Expand any globs in the path.
-            if [ -e "$remove" ]; then
+            if [[ -e "$remove" ]]; then
               rm -r "$remove" || fail_because "Could not exclude \"$remove\" from stage."
             fi
           fi
@@ -133,7 +133,7 @@ case $command in
         object_basename="$object_name"
         path_to_object="$(dirname $path_to_stage)/$object_basename"
         path_to_local_save=$(get_option 'local')
-        [ -d "$path_to_local_save" ] || fail_because "The directory specified by the \"local\" option must already exist; it does not."
+        [[ -d "$path_to_local_save" ]] || fail_because "The directory specified by the \"local\" option must already exist; it does not."
         if ! has_failed; then
           list_clear
           echo_heading "Saving locally"
@@ -164,7 +164,7 @@ case $command in
         export AWS_ACCESS_KEY_ID
         export AWS_SECRET_ACCESS_KEY
         result=$(php "$ROOT/amazon_s3.php" "$aws_region" "$aws_bucket" "$object_basename" "$path_to_object" "$backups_to_store")
-        [ $? -ne 0 ] && fail_because "$result"
+        [[ $? -ne 0 ]] && fail_because "$result"
 
         # Cleanup the local object file.
         rm "$path_to_object" || fail_because "Could not remove local object directory: $object"
