@@ -46,7 +46,9 @@
 <li>Install in your repository root using <code>cloudy pm-install aklump/website_backup</code></li>
 <li>Open <em>bin/config/website_backup.yml</em> and modify as needed.</li>
 <li>Open <em>bin/config/website_backup.local.yml</em> and ...; be sure to ignore this file in SCM as it contains your AWS credentials.</li>
-<li>Create a cron job that executes <em>bin/website_backup</em> at the desired interval:</li>
+<li><p>Create a cron job that executes <em>bin/website_backup</em> at the desired interval, e.g.</p>
+
+<p>0 1 * * * /var/www/mywebsite.org/app/bin/website_backup bu  2>&amp;1 | mail -s "backup" me@developer.com</p></li>
 </ul>
 
 <h2>Requirements</h2>
@@ -125,7 +127,7 @@
 <footer>
   <div class="pager"><a href="s3.html" class="prev s3">&laquo;Setting Up S3</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.10 &bull; Last Updated: Mon, 15 Jul 2019 10:47:47 -0700</p>
+    <p class="legaleeze center">Version: 0.0.11 &bull; Last Updated: Sun, 21 Jul 2019 22:57:22 -0700</p>
   </div>
 </footer>
 

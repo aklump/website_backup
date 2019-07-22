@@ -26,9 +26,9 @@
 <section>
 
 <ol>
-<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/gsg/SigningUpforS3.html">Create an account</a> and login.</li>
-<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html">Create a bucket</a> to hold the backups.</li>
-<li><p><a href="https://console.aws.amazon.com/iam/home#/policies">Create an access policy</a> using something like the following, replacing <code>BUCKET</code> with the bucket name.</p>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/gsg/SigningUpforS3.html">Create an S3 account</a> and login.</li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html">Create a bucket</a> to hold the backups.  Use server-side encryption.</li>
+<li><p><a href="https://console.aws.amazon.com/iam/home#/policies">Create an access policy</a>, e.g., <em>backup--gop-prod</em> using something like the following, replacing <code>BUCKET</code> with the bucket name.</p>
 
 <pre><code>{
     "Version": "2012-10-17",
@@ -57,7 +57,7 @@
     ]
 }
 </code></pre></li>
-<li><p><a href="https://console.aws.amazon.com/iam/home#/home">Create a dedicated user</a> to run the script.</p></li>
+<li><p><a href="https://console.aws.amazon.com/iam/home#/home">Create an AWS dedicated user</a> with Programmatic access only to run the script.</p></li>
 <li>Add that policy to the user.<br />
 <img src="images/add-permissions.jpg" alt="Add permissions to user" />
 <img src="images/attach.jpg" alt="Attach" /></li>
@@ -71,7 +71,7 @@
 <footer>
   <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="README.html" class="next readme">Website Backup&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.10 &bull; Last Updated: Mon, 15 Jul 2019 10:47:48 -0700</p>
+    <p class="legaleeze center">Version: 0.0.11 &bull; Last Updated: Sun, 21 Jul 2019 22:57:22 -0700</p>
   </div>
 </footer>
 
