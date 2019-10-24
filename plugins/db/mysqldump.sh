@@ -4,6 +4,14 @@
 # @file
 # Handles the database export using mysqldump
 #
+#   database:
+#      handler: mysqldump
+#      host: localhost
+#      port: PORT
+#      name: NAME
+#      user: USER
+#      password: PASSWORD
+#
 
 eval $(get_config_as mysqldump "bin.mysqldump" "mysqldump")
 eval $(get_config_as mysql "bin.mysql" "mysql")
@@ -28,11 +36,11 @@ shared_options="--lock-tables --single-transaction"
 local_db_cnf="$(tempdir website_backup)/connection.cnf"
 connection_options="--defaults-file=$local_db_cnf"
 [ -e "$local_db_cnf" ] && rm "$local_db_cnf"
-echo "[client]" > $local_db_cnf
-echo "host=\"$host\"" >> $local_db_cnf
-[ "$port" ] && echo "port=\"$port\"" >> $local_db_cnf
-echo "user=\"$user\"" >> $local_db_cnf
-echo "password=\"$password\"" >> $local_db_cnf
+echo "[client]" >$local_db_cnf
+echo "host=\"$host\"" >>$local_db_cnf
+[ "$port" ] && echo "port=\"$port\"" >>$local_db_cnf
+echo "user=\"$user\"" >>$local_db_cnf
+echo "password=\"$password\"" >>$local_db_cnf
 
 # Make a note of total tables.
 total_tables=($($mysql $connection_options "$name" -s -N -e "SELECT COUNT(table_name) FROM information_schema.tables WHERE table_schema = '$name'"))
@@ -49,7 +57,7 @@ if [ ${#cache_tables[@]} -gt 0 ]; then
   $mysqldump $connection_options $shared_options --no-data "$name" --result-file="$path_to_output" || fail_because "mysqldump structure export failed."
 
   # Now append the data from all but our cache_tables to the same dumpfile.
-  $mysqldump $connection_options $shared_options --no-create-info "$name" ${tables[@]} >> "$path_to_output" || fail_because "mysqldump data export failed."
+  $mysqldump $connection_options $shared_options --no-create-info "$name" ${tables[@]} >>"$path_to_output" || fail_because "mysqldump data export failed."
 
 # Otherwise one dump is sufficient.
 else
