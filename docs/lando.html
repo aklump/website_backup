@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Lando Integration</title>
+  <link href="search/tipuesearch.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body class="page--lando">
+<header>
+  <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="s3.html" class="next s3">Setting Up S3&raquo;</a></div></header>
+<section class="sub-header">
+  <div class="breadcrumbs"><a href="index.html">Index</a>
+         &raquo
+      </div>      <div class="search__wrapper">
+  <form action="search--results.html">
+    <input type="text" class="search-input" name="q" id="tipue_search_input" autocomplete="off" required>
+  </form>
+</div>
+  </section>
+
+
+<h1>Lando Integration</h1>
+
+<section>
+
+<ol>
+<li>Use the <code>mysqldump</code> plugin.</li>
+<li>Create <code>tooling</code> in <em>lando.yml</em></li>
+<li>Use <code>lando website-backup</code> to execute.</li>
+</ol>
+
+<h2>In Detail</h2>
+
+<p>To integration with Lando you need to create some tooling scripts in <em>lando.yml</em>.  Here is an example.</p>
+
+<pre><code>    tooling:
+      website-backup:
+        service: appserver
+        description: Send a backup of the db and user files to S3.
+        cmd: "cd /app &amp;&amp; ./bin/website_backup backup"
+</code></pre>
+
+<p>In this second example we are going to store backups locally in the <em>purgeable</em> folder and ignore the files.  This should be connected to Loft Dev for safety backups.</p>
+
+<pre><code>    tooling:
+      website-backup-local-db:
+        service: appserver
+        description: Save a local db-only snapshot.
+        cmd: "cd /app &amp;&amp; ./bin/website_backup backup -d --local=/app/private/default/db/purgeable"
+</code></pre>
+
+<p>Then to run the backups you need only do:</p>
+
+<pre><code>    lando website-backup
+    lando website-backup-local-db
+</code></pre>
+</section>
+
+<div class="search__results">
+  <div id="tipue_search_content"></div>
+</div>
+
+<footer>
+  <div class="pager"><a href="db_handler.html" class="prev db_handler">&laquo;Database Handlers</a><a href="index.html" class="index pager__book-title"></a><a href="s3.html" class="next s3">Setting Up S3&raquo;</a></div>  
+  <div id="footer-legaleeze">
+    <p class="legaleeze center">Version: 0.0.12 &bull; Last Updated: Thu, 24 Oct 2019 08:54:18 -0700</p>
+  </div>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="search/tipuesearch_content.js"></script>
+  <script src="search/tipuesearch_set.js"></script>
+  <script src="search/tipuesearch.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#tipue_search_input').tipuesearch()
+    })
+  </script>
+<script src="js/core.js"></script>
+</body>
+</html>
+

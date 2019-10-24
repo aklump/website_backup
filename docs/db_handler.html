@@ -9,7 +9,7 @@
 
 <body class="page--db_handler">
 <header>
-  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="s3.html" class="next s3">Setting Up S3&raquo;</a></div></header>
+  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="lando.html" class="next lando">Lando Integration&raquo;</a></div></header>
 <section class="sub-header">
   <div class="breadcrumbs"><a href="index.html">Index</a>
          &raquo
@@ -27,8 +27,24 @@
 
 <ul>
 <li>Given an id such as <code>my_handler</code>, you must create <em>plugins/db/my_handler.sh</em>.</li>
-<li>It must provide a backup of the database using whatever config it wants and place it in <code>$stage_dir</code>.</li>
-<li>It must use <code>$database_dumpfile</code> in the output filename.</li>
+<li>It should define the configuration as needed, consider prefixing with plugin name if appropriate.</li>
+<li><p>The configuration must be shown in the header comment, e.g.</p>
+
+<pre><code>#
+# @file
+# Handles the database export using lando
+#
+#   database:
+#    handler: lando
+#    lando_service: database
+#
+</code></pre></li>
+<li>It must provide a backup of the database using whatever config it wants and place it in <code>$path_to_stage</code>.</li>
+<li>The script runs with <code>$APP_ROOT</code> as the cwd.</li>
+<li>It must use <code>$database_dumpfile</code> as the output filename.</li>
+<li>For configuration errors use <code>exit_with_failure*</code></li>
+<li>For execution errors use <code>fail_because</code> and exit non-zero.  You may also use <code>write_log_error</code> as appropriate.</li>
+<li>See existing plugins as a starting point.</li>
 </ul>
 </section>
 
@@ -37,9 +53,9 @@
 </div>
 
 <footer>
-  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="s3.html" class="next s3">Setting Up S3&raquo;</a></div>  
+  <div class="pager"><a href="CHANGELOG.html" class="prev CHANGELOG">&laquo;Changelog</a><a href="index.html" class="index pager__book-title"></a><a href="lando.html" class="next lando">Lando Integration&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.11 &bull; Last Updated: Sun, 21 Jul 2019 22:57:22 -0700</p>
+    <p class="legaleeze center">Version: 0.0.12 &bull; Last Updated: Thu, 24 Oct 2019 08:54:17 -0700</p>
   </div>
 </footer>
 
