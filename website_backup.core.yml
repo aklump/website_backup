@@ -8,33 +8,14 @@ default_command: help
 commands:
   backup:
     help: 'Backup to the cloud service'
-    aliases:
-      - bu
-    options:
-      files:
-        help: 'Only backup files'
-        type: boolean
-        aliases:
-          - f
-      database:
-        help: 'Only backup database'
-        type: boolean
-        aliases:
-          - d
-      local:
-        help: 'Do not push to the cloud, rather save to an existing local directory passed in using this option.'
-        type: string
-      latest:
-        help: 'Include a latest symlink that points to the most recent backup.  Works only with --local'
-        type: boolean
+    aliases: [bu]
+    options: { files: { help: 'Only backup files', type: boolean, aliases: [f] }, database: { help: 'Only backup database', type: boolean, aliases: [d] }, local: { help: 'Do not push to the cloud, rather save to an existing local directory passed in using this option.', type: string }, latest: { help: 'Include a latest symlink that points to the most recent backup.  Works only with --local', type: boolean } }
   init:
     help: 'Initialize local configuration files.'
   help:
     help: 'Show this help screen.'
   clear-cache:
-    aliases:
-      - clearcache
-      - cc
+    aliases: [clearcache, cc]
     help: 'Clear all cached data.'
 translate:
   ids:
@@ -44,7 +25,7 @@ translate:
     en: null
 name: 'Website Backup'
 description: 'A script to perform routine backups of critical website files and database.'
-version: 0.0.13
+version: 0.0.14
 author: 'Aaron Klump <sourcecode@intheloftstudios.com>'
 backups_to_store: 14
 bin: null
