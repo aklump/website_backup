@@ -150,9 +150,12 @@ case $command in
       mv "$path_to_object" "$path_to_local_save" || fail_because "Could not move to local: $path_to_local_save"
 
       # Create the symlink for 'latest' copy.
-      path_to_symlink="$path_to_local_save/$latest_symlink_name"
-      [[ -s "$path_to_symlink" ]] && rm "$path_to_symlink"
-      (cd $path_to_local_save && ln -s "$object_basename" "$latest_symlink_name")
+      if has_option latest; then
+        path_to_symlink="$path_to_local_save/$latest_symlink_name"
+        [[ -s "$path_to_symlink" ]] && rm "$path_to_symlink"
+        (cd $path_to_local_save && ln -s "$object_basename" "$latest_symlink_name")
+        list_add_item "latest symlink created"
+      fi
 
       echo_blue_list
     fi
