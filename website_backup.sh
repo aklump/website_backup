@@ -152,9 +152,14 @@ case $command in
       # Create the symlink for 'latest' copy.
       if has_option latest; then
         path_to_symlink="$path_to_local_save/$latest_symlink_name"
-        [[ -s "$path_to_symlink" ]] && rm "$path_to_symlink"
+        [[ -L "$path_to_symlink" ]] && rm "$path_to_symlink"
         (cd $path_to_local_save && ln -s "$object_basename" "$latest_symlink_name")
-        list_add_item "latest symlink created"
+        status=$?
+        if [[ $status -eq 0 ]]; then
+          list_add_item "latest symlink created."
+        else
+          fail_because "Could not create latest symlink."
+        fi
       fi
 
       echo_blue_list
