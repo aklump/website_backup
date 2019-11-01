@@ -42,7 +42,10 @@ The installation script above will generate the following structure where `.` is
     │       └── website_backup
     └── {public web root}
 
-    
+You may need to [define a temporary directory](https://www.cyberciti.biz/tips/shell-scripting-bash-how-to-create-empty-temporary-file-quickly.html) other than the default if you run out of room during backup.  Add something like the following to _.bash_profile_.  You should only do this if you are not able to make a backup due to an error resembling, "No space left on device".  This seems to happen when a server's default tmp directory has insufficient space.
+
+    export TMPDIR="/home/foo/tmp"
+
 ### To Update
 
 - Update to the latest version from your repo root: `cloudy pm-update aklump/website_backup`
@@ -53,11 +56,6 @@ The installation script above will generate the following structure where `.` is
 |----------|----------|---|
 | _website_backup.yml_ | Configuration shared across all server environments: prod, staging, dev  | yes |
 | _website_backup.local.yml_ | Configuration overrides for a single environment; not version controlled. | no |
-
-### Custom Configuration
-
-* lorem
-* ipsum
 
 ## Usage
 
