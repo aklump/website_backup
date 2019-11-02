@@ -9,7 +9,7 @@
 
 <body class="page--readme">
 <header>
-  <div class="pager"><a href="s3.html" class="prev s3">&laquo;Setting Up S3</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div></header>
+  <div class="pager"><a href="index.html" class="prev index">&laquo;Website Backup</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="CHANGELOG.html" class="next changelog">Changelog&raquo;</a></div></header>
 <section class="sub-header">
   <div class="breadcrumbs"><a href="index.html">Index</a>
          &raquo
@@ -40,7 +40,7 @@
 
 <p><strong>Visit <a href="https://aklump.github.io/website_backup">https://aklump.github.io/website_backup</a> for full documentation.</strong></p>
 
-<h2>Quick Start</h2>
+<h2 id="quick">Quick Start</h2>
 
 <ul>
 <li>Install in your repository root using <code>cloudy pm-install aklump/website_backup</code></li>
@@ -48,7 +48,12 @@
 <li>Open <em>bin/config/website_backup.local.yml</em> and ...; be sure to ignore this file in SCM as it contains your AWS credentials.</li>
 <li><p>Create a cron job that executes <em>bin/website_backup</em> at the desired interval, e.g.</p>
 
-<p>0 1 * * * /var/www/mywebsite.org/app/bin/website_backup bu  2>&amp;1 | mail -s "backup" me@developer.com</p></li>
+<pre><code>0 1 * * * /var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
+</code></pre></li>
+<li><p>In <a href="troubleshooting.html#tmpdir">some cases</a> you must override <code>$TMPDIR</code>, something like this (replacing the path to the temporary directory as appropriates for your situation):</p>
+
+<pre><code>0 1 * * * export TMPDIR="/home/foo/tmp"; /var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
+</code></pre></li>
 </ul>
 
 <h2>Requirements</h2>
@@ -70,11 +75,6 @@
 │   └── aklump
 │       └── website_backup
 └── {public web root}
-</code></pre>
-
-<p>You may need to <a href="https://www.cyberciti.biz/tips/shell-scripting-bash-how-to-create-empty-temporary-file-quickly.html">define a temporary directory</a> other than the default if you run out of room during backup.  Add something like the following to <em>.bash_profile</em>.  You should only do this if you are not able to make a backup due to an error resembling, "No space left on device".  This seems to happen when a server's default tmp directory has insufficient space.</p>
-
-<pre><code>export TMPDIR="/home/foo/tmp"
 </code></pre>
 
 <h3>To Update</h3>
@@ -123,9 +123,9 @@
 </div>
 
 <footer>
-  <div class="pager"><a href="s3.html" class="prev s3">&laquo;Setting Up S3</a><a href="index.html" class="index pager__book-title"></a><a href="index.html" class="next index">Index&raquo;</a></div>  
+  <div class="pager"><a href="index.html" class="prev index">&laquo;Website Backup</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="CHANGELOG.html" class="next changelog">Changelog&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.16 &bull; Last Updated: Thu, 31 Oct 2019 20:03:24 -0700</p>
+    <p class="legaleeze center">Version: 0.0.16 &bull; Last Updated: Sat, 02 Nov 2019 08:13:49 -0700</p>
   </div>
 </footer>
 

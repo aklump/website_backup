@@ -13,14 +13,18 @@ A script to perform routine backups of critical website files and database.  Hig
 
 **Visit <https://aklump.github.io/website_backup> for full documentation.**
 
-## Quick Start
+##:quick Quick Start
 
 - Install in your repository root using `cloudy pm-install aklump/website_backup`
 - Open _bin/config/website_backup.yml_ and modify as needed.
 - Open _bin/config/website_backup.local.yml_ and ...; be sure to ignore this file in SCM as it contains your AWS credentials.
 - Create a cron job that executes _bin/website_backup_ at the desired interval, e.g.
 
-    0 1 * * * /var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "backup" me@developer.com
+        0 1 * * * /var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "FOO backup" me@developer.com
+
+- In [some cases](@trouble:tmpdir) you must override `$TMPDIR`, something like this (replacing the path to the temporary directory as appropriates for your situation):
+
+        0 1 * * * export TMPDIR="/home/foo/tmp"; /var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "FOO backup" me@developer.com
 
 ## Requirements
 
@@ -41,10 +45,6 @@ The installation script above will generate the following structure where `.` is
     │   └── aklump
     │       └── website_backup
     └── {public web root}
-
-You may need to [define a temporary directory](https://www.cyberciti.biz/tips/shell-scripting-bash-how-to-create-empty-temporary-file-quickly.html) other than the default if you run out of room during backup.  Add something like the following to _.bash_profile_.  You should only do this if you are not able to make a backup due to an error resembling, "No space left on device".  This seems to happen when a server's default tmp directory has insufficient space.
-
-    export TMPDIR="/home/foo/tmp"
 
 ### To Update
 

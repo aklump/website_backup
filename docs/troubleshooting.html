@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Troubleshooting</title>
+  <link href="search/tipuesearch.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body class="page--trouble">
+<header>
+  <div class="pager"><a href="s3.html" class="prev s3">&laquo;Setting Up S3</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="index.html" class="next index">Index&raquo;</a></div></header>
+<section class="sub-header">
+  <div class="breadcrumbs"><a href="index.html">Index</a>
+         &raquo
+      </div>      <div class="search__wrapper">
+  <form action="search--results.html">
+    <input type="text" class="search-input" name="q" id="tipue_search_input" autocomplete="off" required>
+  </form>
+</div>
+  </section>
+
+
+<h1>Troubleshooting</h1>
+
+<section>
+
+<h2 id="tmpdir">Backups Fail Due to Memory Issues</h2>
+
+<p>You may need to <a href="https://www.cyberciti.biz/tips/shell-scripting-bash-how-to-create-empty-temporary-file-quickly.html">define a temporary directory</a> other than the default if you run out of room during backup.  Add something like the following to <em>.bash_profile</em>.  You should only do this if you are not able to make a backup due to an error resembling, "No space left on device".  This seems to happen when a server's default tmp directory has insufficient space.</p>
+
+<pre><code>export TMPDIR="/home/foo/tmp"
+</code></pre>
+
+<p>You will also have to <a href="README.html#quick">provide the override</a> in your crontab.</p>
+
+<h2>Enable Logging to Find Errors</h2>
+
+<ol>
+<li><p>Open <em>bin/website_backup</em> and uncomment the logging line, e.g.,</p>
+
+<p>LOGFILE="website_backup.core.log"</p></li>
+<li><p>Set the path appropriate to your system.</p></li>
+<li>Try a backup and then review the log file.</li>
+</ol>
+</section>
+
+<div class="search__results">
+  <div id="tipue_search_content"></div>
+</div>
+
+<footer>
+  <div class="pager"><a href="s3.html" class="prev s3">&laquo;Setting Up S3</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="index.html" class="next index">Index&raquo;</a></div>  
+  <div id="footer-legaleeze">
+    <p class="legaleeze center">Version: 0.0.16 &bull; Last Updated: Sat, 02 Nov 2019 08:13:50 -0700</p>
+  </div>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="search/tipuesearch_content.js"></script>
+  <script src="search/tipuesearch_set.js"></script>
+  <script src="search/tipuesearch.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#tipue_search_input').tipuesearch()
+    })
+  </script>
+<script src="js/core.js"></script>
+</body>
+</html>
+
