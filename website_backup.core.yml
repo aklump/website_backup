@@ -29,3 +29,9 @@ version: 0.0.17
 author: 'Aaron Klump <sourcecode@intheloftstudios.com>'
 backups_to_store: 14
 bin: null
+plugins:
+  mysqldump:
+    options:
+      - single-transaction
+      - skip-lock-tables
+      - no-tablespaces

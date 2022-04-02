@@ -30,7 +30,12 @@ exit_with_failure_if_empty_config "database.password" --as=password
 exit_with_failure_if_empty_config "database.name" --as=name
 
 path_to_output="$path_to_stage/$database_dumpfile.$name.sql"
-shared_options="--lock-tables --single-transaction"
+
+eval $(get_config_as -a "plugin_options" "plugins.mysqldump.options")
+shared_options=''
+for option in "${plugin_options[@]}"; do
+   shared_options="$shared_options --${option#--}"
+done
 
 # Create the .cnf file with connection information.
 local_db_cnf="$(tempdir website_backup)/connection.cnf"
