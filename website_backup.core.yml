@@ -25,13 +25,10 @@ translate:
     en: null
 name: 'Website Backup'
 description: 'A script to perform routine backups of critical website files and database.'
-version: 0.0.17
+version: 0.0.18
 author: 'Aaron Klump <sourcecode@intheloftstudios.com>'
 backups_to_store: 14
 bin: null
 plugins:
   mysqldump:
-    options:
-      - single-transaction
-      - skip-lock-tables
-      - no-tablespaces
+    options: [single-transaction, skip-lock-tables, no-tablespaces]
