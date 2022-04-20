@@ -85,54 +85,27 @@ case $command in
   if has_option 'files' || ! has_option 'database'; then
     echo_heading "Cherry-picking files"
     list_clear
-    for path in "${manifest[@]}"; do
 
-      # Do not allow absolute paths in the manifest.
-      if [[ "${path:0:1}" == '/' ]] || [[ "${path:0:2}" == '!/' ]]; then
-        write_log_debug "The manifest item \"$path\" should not begin with a slash, as this indicates an absolute path.  Make sure that you only include relative paths, relative to \"$path_to_app\""
-        fail_because "Incorrect manifest item \"$path\". Only paths relative to config var \"path_to_app\" are allowed in the manifest."
+    # Use PHP to build the command to be executed, it will be a combination of
+    # mkdir, cp, and rsync which takes the manifest into account.
+    result=("$(php "$ROOT/plugins/files/default.php" "$path_to_app" "$path_to_stage" ${manifest[@]})")
+    if [[ $? -ne 0 ]]; then
+      write_log_debug "$result"
+      fail_because "$result"
+    fi
+    has_failed && exit_with_failure
+
+    # This will import the array created by PHP into $commands
+    eval $result
+
+    for command in "${commands[@]}"; do
+      list_add_item "$command"
+      eval $command
+      if [[ $? -ne 0 ]]; then
+        fail_because "$command" && exit_with_failure
       fi
-
-      # For includes, make sure the source files exists.
-      if ! has_failed && [[ "${path:0:1}" != '!' ]]; then
-
-        # Expand any globs in the path and calculate absolute path.
-        path_to_source="$(path_resolve "$path_to_app" $path)"
-        [[ -e "$path_to_source" ]] || fail_because "Manifest includes \"$path_to_source\", which does not exist."
-
-        # Ensure the destination file structure exists in the object.
-        destination_dir="$path"
-        if [[ -f "$path_to_source" ]]; then
-          destination_dir="$(dirname $path)/"
-        fi
-        [[ "$destination_dir" ]] && [[ ! -d "$path_to_stage/$destination_dir" ]] && mkdir -p "$path_to_stage/$destination_dir"
-
-        # Copy files
-        list_add_item $path
-        if [[ -f "$path_to_source" ]]; then
-          cp "$path_to_source" "$path_to_stage/$path" || fail_because "Could not stage \"$path\""
-        elif [[ -d "$path_to_source" ]]; then
-          mkdir -p "$path_to_stage/$path/" && rsync -a "$path_to_source/" "$path_to_stage/$path/" || fail_because "Could not stage \"$path\""
-        fi
-      fi
-
-      has_failed && exit_with_failure
     done
 
-    # Remove the excluded files.
-    for path in "${manifest[@]}"; do
-      # Remove the excluded files if they exist.
-      if [[ "${path:0:1}" == '!' ]]; then
-        remove="$path_to_stage/${path:1}"
-
-        # Expand any globs in the path.
-        if [[ -e "$remove" ]]; then
-          rm -r "$remove" || fail_because "Could not exclude \"$remove\" from stage."
-        fi
-      fi
-
-      has_failed && exit_with_failure
-    done
     list_add_item "$(echo_elapsed) seconds"
     echo_blue_list
   fi

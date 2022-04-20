@@ -15,12 +15,12 @@ object_name: OBJECT_NAME
 #with ! to indicate the path should be excluded.  These MUST be relative to the
 #value of "path_to_app", which can be overridden in this file if the default is
 #not appropriate.  If you are using a database handler, the dumpfile will be
-#added to the manifest automatically for you.
+#added to the manifest automatically for you.  Single globs work for paths.
 manifest:
-  - web/sites/default/files/
-  - "!web/sites/default/files/styles/"
-  - "!web/sites/default/files/js/"
-  - "!web/sites/default/files/css/"
+  - web/sites/*/files/
+  - "!web/sites/*/files/styles/"
+  - "!web/sites/*/files/js/"
+  - "!web/sites/*/files/css/"
 
 database:
   # Define which database export handler to use; one of: loft_deploy, mysqldump.

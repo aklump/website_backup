@@ -1,4 +1,9 @@
 {
+    "autoload": {
+        "psr-4": {
+            "Cloudy\\AKlump\\WebsiteBackup\\": "src/"
+        }
+    },
     "require": {
         "aws/aws-sdk-php": "^3.104"
     }
