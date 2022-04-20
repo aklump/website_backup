@@ -47,12 +47,14 @@ case $command in
   eval $(get_config_as AWS_SECRET_ACCESS_KEY aws_secret_access_key)
   eval $(get_config_path path_to_app)
 
-  exit_with_failure_if_empty_config aws_region
-  exit_with_failure_if_empty_config aws_bucket
   exit_with_failure_if_empty_config manifest
-  exit_with_failure_if_empty_config AWS_ACCESS_KEY_ID
-  exit_with_failure_if_empty_config AWS_SECRET_ACCESS_KEY
   exit_with_failure_if_config_is_not_path path_to_app
+  if ! has_option 'local'; then
+    exit_with_failure_if_empty_config aws_region
+    exit_with_failure_if_empty_config aws_bucket
+    exit_with_failure_if_empty_config AWS_ACCESS_KEY_ID
+    exit_with_failure_if_empty_config AWS_SECRET_ACCESS_KEY
+  fi
 
   # Import our configuration/defaults
   eval $(get_config object_name "${aws_bucket}--")
