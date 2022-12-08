@@ -2,3 +2,4 @@ documentation/core/
 documentation/README.md
 .phpunit.result.cache
 /tests/vendor
+*.core.log
