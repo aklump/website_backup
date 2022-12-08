@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Cache Tables by Framework</title>
+  <link href="search/tipuesearch.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+
+<body class="page--cache_tables">
+<header>
+  <div class="pager"><a href="README.html" class="prev README">&laquo;Website Backup</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="CHANGELOG.html" class="next changelog">Changelog&raquo;</a></div></header>
+<section class="sub-header">
+  <div class="breadcrumbs"><a href="index.html">Index</a>
+         &raquo
+      </div>      <div class="search__wrapper">
+  <form action="search--results.html">
+    <input type="text" class="search-input" name="q" id="tipue_search_input" autocomplete="off" required>
+  </form>
+</div>
+  </section>
+
+
+<h1>Cache Tables by Framework</h1>
+
+<section>
+
+<p>Use these as a starting point for configuration. You may want to check if all the tables listed are actually in your database before listing them in your config, e.g. <code>accesslog</code> is Drupal 7 only, I believe.</p>
+
+<h2>Drupal</h2>
+
+<pre><code class="yaml">database:
+  cache_tables:
+    - accesslog
+    - batch
+    - cache
+    - cache_*
+    - captcha_sessions
+    - field_deleted_data_*
+    - flood
+    - honeypot_user
+    - node_access
+    - old_*
+    - queue
+    - search_index
+    - sessions
+    - watchdog
+</code></pre>
+
+<ul>
+<li>[https://www.drupal.org/docs/7/modules/backup-and-migrate/recommendations-for-making-backups-more-reliable](Recommendations for making backups more reliable)</li>
+<li>https://drupal.stackexchange.com/a/171884/26195</li>
+</ul>
+
+<h2>Wordpress</h2>
+
+<p>@todo</p>
+</section>
+
+<div class="search__results">
+  <div id="tipue_search_content"></div>
+</div>
+
+<footer>
+  <div class="pager"><a href="README.html" class="prev README">&laquo;Website Backup</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="CHANGELOG.html" class="next changelog">Changelog&raquo;</a></div>  
+  <div id="footer-legaleeze">
+    <p class="legaleeze center">Version: 0.0.22 &bull; Last Updated: Wed, 07 Dec 2022 21:23:10 -0800</p>
+  </div>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="search/tipuesearch_content.js"></script>
+  <script src="search/tipuesearch_set.js"></script>
+  <script src="search/tipuesearch.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#tipue_search_input').tipuesearch()
+    })
+  </script>
+<script src="js/core.js"></script>
+</body>
+</html>
+
