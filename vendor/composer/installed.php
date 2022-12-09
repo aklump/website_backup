@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => 'ff83747993e111285df2eed7a56473366809453c',
+        'reference' => '76ceba66664155dfc86ae6e86895c894d2270896',
         'name' => '__root__',
         'dev' => true,
     ),
@@ -16,7 +16,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => 'ff83747993e111285df2eed7a56473366809453c',
+            'reference' => '76ceba66664155dfc86ae6e86895c894d2270896',
             'dev_requirement' => false,
         ),
         'aws/aws-crt-php' => array(
@@ -29,12 +29,12 @@
             'dev_requirement' => false,
         ),
         'aws/aws-sdk-php' => array(
-            'pretty_version' => '3.252.4',
-            'version' => '3.252.4.0',
+            'pretty_version' => '3.252.5',
+            'version' => '3.252.5.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../aws/aws-sdk-php',
             'aliases' => array(),
-            'reference' => 'ce0b006b73c6ea78eb570aa3fcd838d0df34ec1b',
+            'reference' => '105cae518931ae626693e99d2be2bffa0d13b6c7',
             'dev_requirement' => false,
         ),
         'guzzlehttp/guzzle' => array(
