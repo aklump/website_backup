@@ -8,6 +8,8 @@
 # Define the configuration file relative to this script.
 CONFIG="website_backup.core.yml"
 
+COMPOSER_VENDOR=""
+
 # Uncomment this line to enable file logging.
 #LOGFILE="website_backup.core.log"
 
