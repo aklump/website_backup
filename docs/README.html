@@ -53,6 +53,10 @@
 
 <pre><code>0 1 * * * export TMPDIR="/home/foo/tmp"; /var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
 </code></pre></li>
+<li><p>You may also need to indicate a PHP version in the crontab:</p>
+
+<pre><code class="cronexp">0 1 * * * export PATH=/usr/local/php81/bin:$PATH;/var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
+</code></pre></li>
 </ul>
 
 <h2>Requirements</h2>
@@ -125,7 +129,7 @@
 <footer>
   <div class="pager"><a href="index.html" class="prev index">&laquo;Website Backup</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="cache_tables.html" class="next cache_tables">Cache Tables by Framework&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.25 &bull; Last Updated: Tue, 07 Nov 2023 09:47:52 -0800</p>
+    <p class="legaleeze center">Version: 0.0.26 &bull; Last Updated: Wed, 29 Nov 2023 10:09:05 -0800</p>
   </div>
 </footer>
 
