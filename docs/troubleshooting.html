@@ -26,7 +26,7 @@
 
 <h2>tmpdir Backups Fail Due to Memory Issues</h2>
 
-<p>You may need to <a href="https://www.cyberciti.biz/tips/shell-scripting-bash-how-to-create-empty-temporary-file-quickly.html">define a temporary directory</a> other than the default if you run out of room during backup.  Add something like the following to <em>.bash_profile</em>.  You should only do this if you are not able to make a backup due to an error resembling, "No space left on device".  This seems to happen when a server's default tmp directory has insufficient space.</p>
+<p>You may need to <a href="https://www.cyberciti.biz/tips/shell-scripting-bash-how-to-create-empty-temporary-file-quickly.html">define a temporary directory</a> other than the default if you run out of room during backup. Add something like the following to <em>.bash_profile</em>. You should only do this if you are not able to make a backup due to an error resembling, "No space left on device". This seems to happen when a server's default tmp directory has insufficient space.</p>
 
 <pre><code>export TMPDIR="/home/foo/tmp"
 </code></pre>
@@ -45,9 +45,15 @@
 
 <h2>Wrong Version of PHP Being Used by Cron</h2>
 
-<p>Add <code>export CLOUDY_PHP=/usr/local/php81/bin/php</code> to the cron command where you point to the correct PHP version.</p>
+<p>"Your Composer dependencies require a PHP version ">= 8.1.0". You are running 7.4.25."</p>
 
-<pre><code class="php">0 1 * * * export CLOUDY_PHP=/usr/local/php81/bin/php;/var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
+<p>See README for how to set the PHP Versions in the crontab expression.</p>
+
+<h3>Deprecated Solution with <code>CLOUDY_PHP</code></h3>
+
+<p>This will be removed in future versions; don't do this.</p>
+
+<pre><code class="cronexp">0 1 * * * export CLOUDY_PHP=/usr/local/php81/bin/php;/var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
 </code></pre>
 
 </section>
@@ -59,7 +65,7 @@
 <footer>
   <div class="pager"><a href="s3.html" class="prev s3">&laquo;Setting Up S3</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="index.html" class="next index">Index&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.25 &bull; Last Updated: Tue, 07 Nov 2023 09:47:54 -0800</p>
+    <p class="legaleeze center">Version: 0.0.26 &bull; Last Updated: Wed, 29 Nov 2023 10:09:08 -0800</p>
   </div>
 </footer>
 

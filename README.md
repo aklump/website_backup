@@ -25,7 +25,11 @@ A script to perform routine backups of critical website files and database.  Hig
 - In [some cases](@trouble:tmpdir) you must override `$TMPDIR`, something like this (replacing the path to the temporary directory as appropriates for your situation):
 
         0 1 * * * export TMPDIR="/home/foo/tmp"; /var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "FOO backup" me@developer.com
+- You may also need to indicate a PHP version in the crontab:
 
+    ```cronexp
+    0 1 * * * export PATH=/usr/local/php81/bin:$PATH;/var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "FOO backup" me@developer.com
+    ```
 ## Requirements
 
 You must have [Cloudy](https://github.com/aklump/cloudy) installed on your system to install this package.
