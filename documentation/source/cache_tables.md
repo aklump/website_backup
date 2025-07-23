@@ -12,6 +12,8 @@ database:
     - cache
     - cache_*
     - captcha_sessions
+    - config_export
+    - config_import
     - field_deleted_data_*
     - flood
     - honeypot_user
