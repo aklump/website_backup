@@ -20,7 +20,9 @@ database:
     - node_access
     - old_*
     - queue
+    - router
     - search_index
+    - semaphore
     - sessions
     - watchdog
 ```

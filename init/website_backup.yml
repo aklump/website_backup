@@ -32,8 +32,21 @@ database:
   # application. These cache_tables will have their STRUCTURE ONLY exported and
   # the contents of these tables will not exist in the dump file.
   cache_tables:
+    - accesslog
+    - batch
     - cache
     - cache_*
-    - search_index
+    - captcha_sessions
+    - config_export
+    - config_import
+    - field_deleted_data_*
+    - flood
+    - honeypot_user
     - node_access
+    - old_*
+    - queue
+    - router
+    - search_index
+    - semaphore
+    - sessions
     - watchdog
