@@ -12,7 +12,7 @@ aws_retention:
   # Keep every backup for the first N days.
   keep_all_for_days: 2
   # After the above window, keep the latest backup of each day for N additional days.
-  keep_latest_daily_for_days: 14
+  keep_latest_daily_for_days: 12
   # After the daily window, keep the latest backup of each month for N additional months.
   keep_latest_monthly_for_months: 12
   # After the monthly window, keep the latest backup of each year for N additional years.
