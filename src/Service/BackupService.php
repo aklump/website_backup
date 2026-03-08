@@ -21,6 +21,8 @@ class BackupService {
 
   private $tempDirectoryFactory;
 
+  private $s3Factory;
+
   public function __construct(array $config, OutputInterface $output) {
     $this->config = $config;
     $this->output = $output;
@@ -29,6 +31,13 @@ class BackupService {
     $this->getShortPath = new GetShortPath();
     $this->emailService = new EmailService($output);
     $this->tempDirectoryFactory = new TempDirectoryFactory();
+    $this->s3Factory = function (string $region, string $bucket, string $key, string $secret) {
+      return new S3Service($region, $bucket, $key, $secret);
+    };
+  }
+
+  public function setS3Factory(callable $factory): void {
+    $this->s3Factory = $factory;
   }
 
   public function run(int $options = 0, $local_path = ''): void {
@@ -262,7 +271,7 @@ class BackupService {
         $this->output->writeln(sprintf(' <info>*</info> using key: ...%s', substr($this->config['aws_access_key_id'], -6)));
         $this->output->writeln(sprintf(' <info>*</info> object: %s', $final_artifact_name));
 
-        $s3 = new S3Service(
+        $s3 = ($this->s3Factory)(
           $this->config['aws_region'],
           $this->config['aws_bucket'],
           $this->config['aws_access_key_id'],

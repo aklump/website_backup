@@ -15,11 +15,16 @@ class GetShortPath {
       return $path;
     }
 
-    $short_path = substr($path, strlen($this->basepath) + 1);
+    $relative = substr($path, strlen($this->basepath));
+    if ($relative === '') {
+      return '.';
+    }
+    $relative = ltrim($relative, '/');
+
     if ($this->basepath === getcwd()) {
-      $short_path = "./$short_path";
+      return "./$relative";
     }
 
-    return $short_path;
+    return $relative;
   }
 }

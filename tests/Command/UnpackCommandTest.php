@@ -10,6 +10,12 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @covers \AKlump\WebsiteBackup\Command\UnpackCommand
+ * @uses \AKlump\WebsiteBackup\Config\ConfigLoader
+ * @uses \AKlump\WebsiteBackup\Service\UnpackService
+ * @uses \AKlump\WebsiteBackup\Service\ProcessRunner
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
+ * @uses \AKlump\WebsiteBackup\Helper\GetInstalledInRoot
+ * @uses \AKlump\WebsiteBackup\Service\TempDirectoryFactory
  */
 class UnpackCommandTest extends TestCase {
 

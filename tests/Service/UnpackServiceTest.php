@@ -9,6 +9,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @covers \AKlump\WebsiteBackup\Service\UnpackService
+ * @uses \AKlump\WebsiteBackup\Service\ProcessRunner
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
+ * @uses \AKlump\WebsiteBackup\Service\TempDirectoryFactory
  */
 class UnpackServiceTest extends TestCase {
 

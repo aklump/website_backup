@@ -11,6 +11,19 @@ use Symfony\Component\Console\Tester\CommandTester;
 /**
  * @covers \AKlump\WebsiteBackup\Command\BackupLocalCommand
  * @covers \AKlump\WebsiteBackup\Command\BackupS3Command
+ * @uses \AKlump\WebsiteBackup\Config\ConfigLoader
+ * @uses \AKlump\WebsiteBackup\Service\BackupService
+ * @uses \AKlump\WebsiteBackup\Service\BackupOptions
+ * @uses \AKlump\WebsiteBackup\Service\ProcessRunner
+ * @uses \AKlump\WebsiteBackup\Service\TempDirectoryFactory
+ * @uses \AKlump\WebsiteBackup\Service\DatabaseDumper
+ * @uses \AKlump\WebsiteBackup\Service\EmailService
+ * @uses \AKlump\WebsiteBackup\Service\ManifestService
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
+ * @uses \AKlump\WebsiteBackup\Helper\GetInstalledInRoot
+ * @uses \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig
+ * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
+ * @uses \AKlump\WebsiteBackup\Service\S3Service
  */
 class BackupCommandTest extends TestCase {
 

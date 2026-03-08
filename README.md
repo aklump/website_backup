@@ -39,7 +39,7 @@ The tool is designed for repeatable CLI use with configuration in YAML and secre
 2. Create your config file.
 
    ```bash
-   bin/website_backup install
+   vendor/bin/website_backup install
    ```
 
 3. Edit `bin/config/website_backup.yml` and fill in the variables.
@@ -49,19 +49,19 @@ The tool is designed for repeatable CLI use with configuration in YAML and secre
 5. Check your setup.
 
    ```bash
-   bin/website_backup healthcheck
+   vendor/bin/website_backup healthcheck
    ```
 
 6. Run a local backup to test.
 
    ```bash
-   bin/website_backup backup:local --dir ./backups/
+   vendor/bin/website_backup backup:local --dir ./backups/
    ```
 
 7. Run an S3 backup to test
 
    ```bash
-   bin/website_backup backup:s3
+   vendor/bin/website_backup backup:s3
    ```
 
 ## Setting Up S3
@@ -73,7 +73,7 @@ The tool is designed for repeatable CLI use with configuration in YAML and secre
 5. Verify the setup:
 
    ```bash
-   bin/website_backup healthcheck
+   vendor/bin/website_backup healthcheck
    ```
 
 A minimal IAM policy should allow listing the bucket and reading, writing, and deleting objects within it:

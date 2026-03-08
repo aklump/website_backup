@@ -7,6 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \AKlump\WebsiteBackup\Config\ConfigLoader
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
  */
 class ConfigLoaderTest extends TestCase {
 

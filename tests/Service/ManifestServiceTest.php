@@ -92,4 +92,63 @@ class ManifestServiceTest extends TestCase {
       '--exclude=/file2.txt',
     ], $commands[1]);
   }
+
+  public function testManifestWithAbsolutePathsThrowsException() {
+    $this->expectException(\InvalidArgumentException::class);
+    new ManifestService($this->source_dir, $this->dest_dir, ['/absolute/path']);
+  }
+
+  public function testManifestWithAbsoluteExcludesThrowsException() {
+    $this->expectException(\InvalidArgumentException::class);
+    new ManifestService($this->source_dir, $this->dest_dir, ['!/absolute/path']);
+  }
+
+  public function testGetManifestItems() {
+    $manifest = ['file1.txt', 'dir1/'];
+    $service = new ManifestService($this->source_dir, $this->dest_dir, $manifest);
+    $this->assertEquals($manifest, $service->getManifestItems());
+  }
+
+  public function testResolve() {
+    $service = new ManifestService($this->source_dir, $this->dest_dir, []);
+    $this->assertEquals([$this->source_dir . '/file1.txt'], $service->resolve('file1.txt'));
+    $this->assertEquals([$this->source_dir . '/dir1'], $service->resolve('dir1'));
+    $this->assertEmpty($service->resolve('non_existent.txt'));
+  }
+
+  public function testResolveWithGlob() {
+    file_put_contents($this->source_dir . '/file2.txt', 'test2');
+    $service = new ManifestService($this->source_dir, $this->dest_dir, []);
+    $resolved = $service->resolve('file*.txt');
+    sort($resolved);
+    $expected = [$this->source_dir . '/file1.txt', $this->source_dir . '/file2.txt'];
+    sort($expected);
+    $this->assertEquals($expected, $resolved);
+  }
+
+  public function testResolveExcludePattern() {
+    $service = new ManifestService($this->source_dir, $this->dest_dir, []);
+    $this->assertEquals([$this->source_dir . '/file1.txt'], $service->resolve('!file1.txt'));
+  }
+
+  public function testPrepareCommandsOptimizesMkdir() {
+    // This tests the logic in prepareCommands that avoids redundant mkdir -p calls
+    $manifest = ['dir1/subdir/file.txt', 'dir1/file2.txt'];
+    mkdir($this->source_dir . '/dir1/subdir', 0777, TRUE);
+    file_put_contents($this->source_dir . '/dir1/subdir/file.txt', 'content');
+    file_put_contents($this->source_dir . '/dir1/file2.txt', 'content2');
+
+    $service = new ManifestService($this->source_dir, $this->dest_dir, $manifest);
+    $commands = $service->getCommands();
+
+    // It should have mkdir -p dest/dir1/subdir and NOT mkdir -p dest/dir1 because subdir covers it
+    // Wait, ksort and child check:
+    // keys: [dest/dir1, dest/dir1/subdir]
+    // haystack: "dest/dir1", "dest/dir1/subdir"
+    // "dest/dir1/" is in "dest/dir1/subdir"
+
+    $mkdir_commands = array_filter($commands, function($cmd) { return $cmd[0] === 'mkdir'; });
+    $this->assertCount(1, $mkdir_commands);
+    $this->assertEquals(['mkdir', '-p', $this->dest_dir . '/dir1/subdir'], reset($mkdir_commands));
+  }
 }

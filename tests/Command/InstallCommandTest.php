@@ -9,6 +9,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 /**
  * @covers \AKlump\WebsiteBackup\Command\InstallCommand
+ * @uses \AKlump\WebsiteBackup\Config\ConfigLoader
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
  */
 class InstallCommandTest extends TestCase {
 

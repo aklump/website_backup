@@ -10,6 +10,8 @@ use Symfony\Component\Process\Process;
 
 /**
  * @covers \AKlump\WebsiteBackup\Service\DatabaseDumper
+ * @uses \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig
+ * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
  */
 class DatabaseDumperTest extends TestCase {
 
@@ -74,7 +76,7 @@ class DatabaseDumperTest extends TestCase {
     $mock_runner = $this->createMock(ProcessRunner::class);
     $mock_process_success = $this->createMock(Process::class);
     $mock_process_success->method('isSuccessful')->willReturn(TRUE);
-    
+
     // For listing tables
     $mock_process_tables = $this->createMock(Process::class);
     $mock_process_tables->method('isSuccessful')->willReturn(TRUE);
@@ -91,7 +93,7 @@ class DatabaseDumperTest extends TestCase {
 
     $dumper = new DatabaseDumper($mock_runner);
     $dumper->setTempDir($this->test_dir);
-    
+
     $db_config = [
       'host' => 'localhost',
       'user' => 'user',
@@ -99,13 +101,13 @@ class DatabaseDumperTest extends TestCase {
       'name' => 'db',
     ];
     $output_path = $this->test_dir . '/dump.sql';
-    
+
     $dumper->dump($db_config, $output_path, ['cache_*']);
 
     // Check that mysql and mysqldump were called without --password
     // 1. structure dump, 2. list tables, 3. data dump
     $this->assertGreaterThanOrEqual(3, count($captured_args));
-    
+
     foreach ($captured_args as $args) {
       foreach ($args as $arg) {
         $this->assertStringNotContainsString('--password', $arg);

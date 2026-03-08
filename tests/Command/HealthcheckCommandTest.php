@@ -9,6 +9,14 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 /**
  * @covers \AKlump\WebsiteBackup\Command\HealthcheckCommand
+ * @uses \AKlump\WebsiteBackup\Config\ConfigLoader
+ * @uses \AKlump\WebsiteBackup\Helper\GetInstalledInRoot
+ * @uses \AKlump\WebsiteBackup\Service\ManifestService
+ * @uses \AKlump\WebsiteBackup\Service\ProcessRunner
+ * @uses \AKlump\WebsiteBackup\Service\S3Service
+ * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
+ * @uses \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
  */
 class HealthcheckCommandTest extends TestCase {
 
