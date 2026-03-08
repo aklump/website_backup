@@ -108,6 +108,7 @@ class BackupServiceTest extends TestCase {
     $dirs = glob($this->test_local_dir . '/test_backup--*');
     $this->assertCount(1, $dirs);
     $this->assertFileExists($dirs[0] . '/file.txt');
+    $this->assertTrue(is_dir($dirs[0]), 'The backup artifact should be a directory.');
   }
 
   public function testRunLocalBackupGzipSuccess() {
@@ -132,6 +133,7 @@ class BackupServiceTest extends TestCase {
     $archives = glob($this->test_local_dir . '/test_backup--*.tar.gz');
     $this->assertCount(1, $archives);
     $this->assertFileExists($archives[0]);
+    $this->assertTrue(is_file($archives[0]), 'The backup artifact should be a file.');
   }
 
   public function testRunLocalBackupEncryptedSuccess() {

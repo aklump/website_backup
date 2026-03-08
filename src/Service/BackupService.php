@@ -3,6 +3,7 @@
 namespace AKlump\WebsiteBackup\Service;
 
 use AKlump\WebsiteBackup\Helper\AssertSafeBackupArtifactPath;
+use AKlump\WebsiteBackup\Helper\MoveFileOrDirectory;
 use AKlump\WebsiteBackup\Helper\RemoveDirectoryTree;
 use AKlump\WebsiteBackup\Helper\RemoveFileOrSymlink;
 use AKlump\WebsiteBackup\Helper\GetShortPath;
@@ -62,11 +63,10 @@ class BackupService {
   }
 
   private function doRun(int $options = 0, $local_path = ''): ?string {
+    $move_file_or_directory = new MoveFileOrDirectory();
     $this->output->writeln('<info>Backing Up Your Website</info>');
 
     $latest = (bool) ($options & BackupOptions::LATEST);
-    $has_database = (bool) ($options & BackupOptions::DATABASE);
-    $has_files = (bool) ($options & BackupOptions::FILES);
     $gzip = (bool) ($options & BackupOptions::GZIP);
     $encrypt = (bool) ($options & BackupOptions::ENCRYPT);
 
@@ -187,7 +187,7 @@ class BackupService {
           if (file_exists($destination) || is_link($destination)) {
             (new RemoveFileOrSymlink())($destination);
           }
-          rename($final_artifact_path, $destination);
+          $move_file_or_directory($final_artifact_path, $destination);
           $this->output->writeln(sprintf(' <info>*</info> %s', ($this->getShortPath)($destination)));
 
           if ($latest) {
@@ -206,7 +206,7 @@ class BackupService {
             (new AssertSafeBackupArtifactPath())($destination, $local_path, $object_name_base);
             (new RemoveDirectoryTree())($destination);
           }
-          rename($staging_dir, $destination);
+          $move_file_or_directory($staging_dir, $destination);
           $final_artifact_name_for_notify = $full_object_name;
           $this->output->writeln(sprintf(' <info>*</info> %s', ($this->getShortPath)($destination)));
 
