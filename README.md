@@ -119,5 +119,3 @@ If you’ve found this project useful, please consider supporting its ongoing ma
   * [Buy Me a Coffee](https://buymeacoffee.com/aklump)
 
   * [Donate via PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4E5KZHDQCEUV8&item_name=Open%20Source%20Sponsorship)
-
-  * [donate.website.com](https://donate.website.com/?id=123)
