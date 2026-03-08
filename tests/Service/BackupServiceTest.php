@@ -53,11 +53,16 @@ class BackupServiceTest extends TestCase {
     rmdir($dir);
   }
 
-  public function testRunRejectsCombinedDatabaseAndFiles() {
-    $service = new BackupService([], new NullOutput());
-    $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('The DATABASE and FILES options cannot be combined.');
-    $service->run(BackupOptions::DATABASE | BackupOptions::FILES);
+  public function testRunAllowsCombinedDatabaseAndFiles() {
+    $config = [
+      'aws_bucket' => 'test-bucket',
+      'manifest' => [],
+      'database' => ['handler' => null],
+    ];
+    $service = new BackupService($config, new NullOutput());
+    // This should no longer throw an exception.
+    $service->run(BackupOptions::DATABASE | BackupOptions::FILES, $this->test_local_dir);
+    $this->assertTrue(true);
   }
 
   public function testRunRejectsEncryptWithoutGzip() {

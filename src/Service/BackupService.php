@@ -84,18 +84,23 @@ class BackupService {
       $this->databaseDumper->setTempDir($temp_work_dir);
 
       // 1. Database export
-      if (!empty($this->config['database']['handler']) && ($has_database || !$has_files)) {
-        $this->output->writeln(sprintf('<comment>Exporting database (via %s)</comment>', $this->config['database']['handler']));
-        $dumpfile = ($this->config['database']['dumpfile'] ?? 'database-backup') . '.' . ($this->config['database']['name'] ?? 'db') . '.sql';
-        $output_path = $staging_dir . '/' . $dumpfile;
-        $start = microtime(TRUE);
-        $this->databaseDumper->dump($this->config['database'], $output_path, $this->config['database']['cache_tables'] ?? []);
-        $elapsed = round(microtime(TRUE) - $start, 2);
-        $this->output->writeln(sprintf(' <info>*</info> %s seconds', $elapsed));
+      if (($options & BackupOptions::DATABASE)) {
+        if (!empty($this->config['database']['handler'])) {
+          $this->output->writeln(sprintf('<comment>Exporting database (via %s)</comment>', $this->config['database']['handler']));
+          $dumpfile = ($this->config['database']['dumpfile'] ?? 'database-backup') . '.' . ($this->config['database']['name'] ?? 'db') . '.sql';
+          $output_path = $staging_dir . '/' . $dumpfile;
+          $start = microtime(TRUE);
+          $this->databaseDumper->dump($this->config['database'], $output_path, $this->config['database']['cache_tables'] ?? []);
+          $elapsed = round(microtime(TRUE) - $start, 2);
+          $this->output->writeln(sprintf(' <info>*</info> %s seconds', $elapsed));
+        }
+        else {
+          $this->output->writeln('<comment>Skipping database export (no handler configured)</comment>', OutputInterface::VERBOSITY_VERBOSE);
+        }
       }
 
       // 2. File copying
-      if ($has_files || !$has_database) {
+      if ($options & BackupOptions::FILES) {
         $this->output->writeln('<comment>Cherry-picking files</comment>');
         $start = microtime(TRUE);
         $config_path = $this->config['__config_path'] ?? '';
@@ -360,11 +365,6 @@ class BackupService {
   }
 
   private function validateOptions(int $options, bool $is_local): void {
-    $has_db = (bool) ($options & BackupOptions::DATABASE);
-    $has_files = (bool) ($options & BackupOptions::FILES);
-    if ($has_db && $has_files) {
-      throw new \InvalidArgumentException('The DATABASE and FILES options cannot be combined.');
-    }
     if (($options & BackupOptions::ENCRYPT) && !($options & BackupOptions::GZIP)) {
       throw new \InvalidArgumentException('The ENCRYPT option requires GZIP to be set.');
     }

@@ -37,9 +37,6 @@ class BackupS3Command extends Command {
     $loader = new ConfigLoader($root, $config_path, $env_path);
     $config = $loader->load();
 
-    if ($input->getOption('database') && $input->getOption('files')) {
-      throw new \RuntimeException('The --database and --files options cannot be used together.');
-    }
 
     // Confirmation for S3 backups
     if (!$input->getOption('force')) {

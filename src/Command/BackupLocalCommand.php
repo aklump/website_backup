@@ -56,9 +56,6 @@ use CommandTrait;
       throw new \RuntimeException('The --encrypt option may only be used with --gzip.');
     }
 
-    if ($input->getOption('database') && $input->getOption('files')) {
-      throw new \RuntimeException('The --database and --files options cannot be used together.');
-    }
 
     $loader->validate($config, TRUE, $input->getOption('notify'), (bool) $encrypt);
 

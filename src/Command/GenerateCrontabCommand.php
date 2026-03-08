@@ -39,20 +39,15 @@ class GenerateCrontabCommand extends Command {
     $loader = new ConfigLoader($root, $config_path, $env_path);
 
 
-    // Calculate current PHP path for the "cookie"
     $php_path_default = dirname(PHP_BINARY);
-    $php_path = $io->ask('Confirm the PHP binary directory', $php_path_default, [
-      $this,
-      'directoryValidator',
-    ]);
-    $php_path = trim($php_path);
+    $php_path = $io->ask('Confirm the PHP binary directory', $php_path_default, function ($value) {
+      return $this->directoryValidator($value);
+    });
 
     $tmpdir_default = sys_get_temp_dir();
-    $tmpdir = $io->ask('Confirm the PHP binary directory', $tmpdir_default, [
-      $this,
-      'directoryValidator',
-    ]);
-    $tmpdir = trim($tmpdir);
+    $tmpdir = $io->ask('Confirm the temporary directory', $tmpdir_default, function ($value) {
+      return $this->directoryValidator($value);
+    });
 
     $parts = [];
     $parts[] = sprintf('TMPDIR="%s"', $tmpdir);

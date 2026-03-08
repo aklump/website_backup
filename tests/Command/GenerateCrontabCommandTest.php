@@ -48,7 +48,9 @@ class GenerateCrontabCommandTest extends TestCase {
     $command_tester = new CommandTester($command);
 
     // Inputs: php_path, tmpdir
-    $command_tester->setInputs(['/usr/bin/php', '/tmp/custom']);
+    $php_dir = dirname(PHP_BINARY);
+    $tmp_dir = sys_get_temp_dir();
+    $command_tester->setInputs([$php_dir, $tmp_dir]);
     $command_tester->execute([]);
 
     $output = $command_tester->getDisplay();
@@ -56,30 +58,32 @@ class GenerateCrontabCommandTest extends TestCase {
     $expected_project_root = realpath($this->test_dir);
     $expected_project_root = rtrim($expected_project_root, '/') . '/';
 
-    $this->assertStringContainsString('TMPDIR="/tmp/custom"', $output);
-    $this->assertStringContainsString('PATH="/usr/bin/php:$PATH"', $output);
+    $this->assertStringContainsString('TMPDIR="' . $tmp_dir . '"', $output);
+    $this->assertStringContainsString('PATH="' . $php_dir . ':$PATH"', $output);
     $this->assertStringContainsString($expected_project_root . 'vendor/bin/website-backup', $output);
     $this->assertStringContainsString('--config ' . $expected_project_root . 'bin/config/website_backup.yml', $output);
     $this->assertStringContainsString('--env-file ' . $expected_project_root . '.env', $output);
     $this->assertStringContainsString('backup:s3 -f --notify', $output);
   }
 
-  public function testGenerateOmitted() {
+  public function testGenerateDefaults() {
     $application = new Application();
     $application->add(new GenerateCrontabCommand());
 
     $command = $application->find('generate:crontab');
     $command_tester = new CommandTester($command);
 
-    // Inputs: php_path, tmpdir
-    // We send '.' to indicate we want to OMIT the field as per our logic
-    $command_tester->setInputs(['.', '.']);
+    // Inputs: empty strings to accept defaults
+    $command_tester->setInputs(['', '']);
     $command_tester->execute([]);
 
     $output = $command_tester->getDisplay();
 
-    $this->assertStringNotContainsString('TMPDIR=', $output);
-    $this->assertStringNotContainsString('PATH=', $output);
+    $php_dir = dirname(PHP_BINARY);
+    $tmp_dir = sys_get_temp_dir();
+
+    $this->assertStringContainsString('TMPDIR="' . $tmp_dir . '"', $output);
+    $this->assertStringContainsString('PATH="' . $php_dir . ':$PATH"', $output);
     $this->assertStringContainsString('vendor/bin/website-backup', $output);
   }
 

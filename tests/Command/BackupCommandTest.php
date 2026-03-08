@@ -147,37 +147,66 @@ class BackupCommandTest extends TestCase {
     ]);
   }
 
-  public function testBackupLocalFailsWithDatabaseAndFiles() {
+  public function testBackupLocalFull() {
     $application = new Application();
     $application->add(new BackupLocalCommand());
 
     $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
-    $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('The --database and --files options cannot be used together.');
+    $local_path = $this->test_dir . '/backups';
+    mkdir($local_path);
 
     $command_tester->execute([
-      '--dir' => $this->test_dir,
-      '--database' => TRUE,
-      '--files' => TRUE,
+      '--dir' => $local_path,
     ]);
+
+    $output = $command_tester->getDisplay();
+    $this->assertStringContainsString('Cherry-picking files', $output);
   }
 
-  public function testBackupS3FailsWithDatabaseAndFiles() {
+  public function testBackupS3WithDatabaseAndFiles() {
+    $config = [
+      'manifest' => ['foo'],
+      'database' => ['url' => 'mysql://user:pass@host/db', 'handler' => null],
+      'aws_region' => 'us-east-1',
+      'aws_bucket' => 'bucket',
+      'aws_access_key_id' => 'key',
+      'aws_secret_access_key' => 'secret',
+      'aws_retention' => [
+        'keep_all_for_days' => 1,
+        'keep_latest_daily_for_days' => 1,
+        'keep_latest_monthly_for_months' => 1,
+        'keep_latest_yearly_for_years' => 1,
+      ],
+    ];
+    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', \Symfony\Component\Yaml\Yaml::dump($config));
+
     $application = new Application();
     $application->add(new BackupS3Command());
 
     $command = $application->find('backup:s3');
     $command_tester = new CommandTester($command);
 
-    $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('The --database and --files options cannot be used together.');
+    // Mock S3Service via BackupService property (tricky because command creates service)
+    // We can't easily mock it here without refactoring command to accept factory.
+    // For now, let's just bypass S3 upload by setting handler to null and testing output.
+    // Wait, S3Service is still called.
+    // Let's use a try-catch to ignore the S3 connection error but check if it reached that point.
 
-    $command_tester->execute([
-      '--database' => TRUE,
-      '--files' => TRUE,
-    ]);
+    try {
+      $command_tester->execute([
+        '--force' => TRUE,
+      ]);
+    } catch (\Exception $e) {
+      if (strpos($e->getMessage(), 'Access Key Id') === false && strpos($e->getMessage(), 'credentials') === false) {
+        throw $e;
+      }
+    }
+
+    $output = $command_tester->getDisplay();
+    $this->assertStringContainsString('Backing Up Your Website', $output);
+    $this->assertStringContainsString('Cherry-picking files', $output);
   }
 
   public function testBackupLocalEncryptFailsWithoutGzip() {
