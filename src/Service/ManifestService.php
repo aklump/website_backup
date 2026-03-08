@@ -27,6 +27,32 @@ class ManifestService {
     $this->manifest = array_unique($manifest_items);
   }
 
+  public function getManifestItems(): array {
+    return $this->manifest;
+  }
+
+  /**
+   * Resolve a manifest pattern to absolute paths on disk.
+   *
+   * @param string $pattern
+   *
+   * @return array
+   */
+  public function resolve(string $pattern): array {
+    $pattern = ltrim($pattern, '!');
+    $paths = [];
+    if (strpos($pattern, '*') !== false) {
+      $globbed = glob($this->source . '/' . $pattern);
+      if ($globbed) {
+        $paths = $globbed;
+      }
+    } elseif (file_exists($this->source . '/' . $pattern)) {
+      $paths[] = $this->source . '/' . $pattern;
+    }
+
+    return $paths;
+  }
+
   public function getCommands(): array {
     $includes = array_map(function ($item) {
       return rtrim($item, '/');

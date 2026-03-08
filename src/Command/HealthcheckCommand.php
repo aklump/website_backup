@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Config\ConfigLoader;
 use App\Helper\GetInstalledInRoot;
+use App\Service\ManifestService;
 use App\Service\ProcessRunner;
 use App\Service\S3Service;
 use Symfony\Component\Console\Command\Command;
@@ -59,7 +60,21 @@ class HealthcheckCommand extends Command {
       }
     }
 
-    // 2. Database Connectivity Check
+    // 2. Manifest Check
+    $output->writeln('');
+    $output->writeln('<comment>Checking Manifest</comment>');
+    $output->writeln('<comment>-----------------</comment>');
+    $manifest_service = new ManifestService($config['path_to_app'], '', $config['manifest']);
+    foreach ($manifest_service->getManifestItems() as $item) {
+      $paths = $manifest_service->resolve($item);
+      if (empty($paths)) {
+        $output->writeln(sprintf(' <info>?</info> %s — No files found matching this pattern.', $item));
+      } else {
+        $output->writeln(sprintf(' <info>✓</info> %s', $item));
+      }
+    }
+
+    // 3. Database Connectivity Check
     if (!empty($config['database'])) {
       $output->writeln('');
       $output->writeln('<comment>Checking Database Connectivity</comment>');
@@ -74,7 +89,7 @@ class HealthcheckCommand extends Command {
       }
     }
 
-    // 3. S3 Connectivity Check
+    // 4. S3 Connectivity Check
     if (!empty($config['aws_bucket'])) {
       $output->writeln('');
       $output->writeln('<comment>Checking S3 Connectivity</comment>');
@@ -89,7 +104,7 @@ class HealthcheckCommand extends Command {
       }
     }
 
-    // 4. System Tools Check
+    // 5. System Tools Check
     $output->writeln('');
     $output->writeln('<comment>Checking System Tools</comment>');
     $output->writeln('<comment>---------------------</comment>');
@@ -119,7 +134,7 @@ class HealthcheckCommand extends Command {
       }
     }
 
-    // 5. Encryption Settings Check
+    // 6. Encryption Settings Check
     $s3_encryption_enabled = !empty($config['encryption']['s3']) && $config['encryption']['s3'] === TRUE;
     if ($s3_encryption_enabled) {
       $output->writeln('');
@@ -141,7 +156,7 @@ class HealthcheckCommand extends Command {
       }
     }
 
-    // 6. Security Checks
+    // 7. Security Checks
     $output->writeln('');
     $output->writeln('<comment>Checking Security</comment>');
     $output->writeln('<comment>-----------------</comment>');
