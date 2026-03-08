@@ -119,6 +119,21 @@ class ConfigLoaderTest extends TestCase {
     }
   }
 
+  public function testInvalidDatabaseNameThrowsException() {
+    $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
+    file_put_contents($config_path, "database:\n  url: \${DATABASE_URL}");
+
+    putenv('DATABASE_URL=mysql://user:pass@host/db;drop');
+    $loader = new ConfigLoader($this->test_app_root);
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Invalid database name');
+    try {
+      $loader->load();
+    } finally {
+      putenv('DATABASE_URL');
+    }
+  }
+
   public function testValidateFailsWhenMissingRequired() {
     $loader = new ConfigLoader($this->test_app_root);
     $config = [

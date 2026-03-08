@@ -27,6 +27,16 @@ class DatabaseDumper {
       throw new \RuntimeException('DatabaseDumper temp directory is not set or invalid.');
     }
     $name = $db_config['name'] ?? '';
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
+      throw new \RuntimeException(sprintf('Invalid database name: %s', $name));
+    }
+
+    foreach ($cache_tables as $pattern) {
+      if (!preg_match('/^[a-zA-Z0-9_*]+$/', $pattern)) {
+        throw new \RuntimeException(sprintf('Invalid cache table pattern: %s. Only letters, numbers, underscores, and asterisks are allowed.', $pattern));
+      }
+    }
+
     $mysqldump_bin = 'mysqldump'; // Could be made configurable
 
     $temp_config = ($this->createMysqlTempConfig)($db_config, $this->tempDir);
@@ -43,7 +53,7 @@ class DatabaseDumper {
         ]);
         $process = $this->processRunner->run($args);
         if (!$process->isSuccessful()) {
-          throw new \RuntimeException('mysqldump failed: ' . $this->processRunner->redact($process->getErrorOutput()));
+          throw new \RuntimeException('mysqldump failed.');
         }
       }
       else {
@@ -55,7 +65,7 @@ class DatabaseDumper {
         ]);
         $process = $this->processRunner->run($args);
         if (!$process->isSuccessful()) {
-          throw new \RuntimeException('mysqldump structure export failed: ' . $this->processRunner->redact($process->getErrorOutput()));
+          throw new \RuntimeException('mysqldump structure export failed.');
         }
 
         // 2. Export data for non-cache tables
@@ -73,7 +83,7 @@ class DatabaseDumper {
 
           $process = $this->processRunner->run($args);
           if (!$process->isSuccessful()) {
-            throw new \RuntimeException('mysqldump data export failed: ' . $this->processRunner->redact($process->getErrorOutput()));
+            throw new \RuntimeException('mysqldump data export failed.');
           }
           file_put_contents($output_path, $process->getOutput(), FILE_APPEND);
         }
@@ -98,7 +108,7 @@ class DatabaseDumper {
 
     $process = $this->processRunner->run($args);
     if (!$process->isSuccessful()) {
-      throw new \RuntimeException('Failed to list tables: ' . $this->processRunner->redact($process->getErrorOutput()));
+      throw new \RuntimeException('Failed to list database tables.');
     }
 
     return array_filter(explode("\n", trim($process->getOutput())));

@@ -14,6 +14,12 @@ class RemoveDirectoryTree {
    * @throws \InvalidArgumentException If path is not a directory or is a symlink.
    */
   public function __invoke(string $path): void {
+    if (empty(trim($path)) || $path === DIRECTORY_SEPARATOR) {
+      throw new \InvalidArgumentException(sprintf('Invalid path for directory removal: "%s"', $path));
+    }
+    if (!str_starts_with($path, DIRECTORY_SEPARATOR)) {
+      throw new \InvalidArgumentException(sprintf('Path must be absolute for directory removal: %s', $path));
+    }
     if (!is_dir($path)) {
       throw new \InvalidArgumentException(sprintf('Path is not a directory: %s', $path));
     }

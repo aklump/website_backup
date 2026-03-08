@@ -86,7 +86,7 @@ class UnpackService {
           ['WEBSITE_BACKUP_ENCRYPTION_PASSWORD' => $this->config['encryption']['password']]
         );
         if (!$process->isSuccessful()) {
-          throw new \RuntimeException('Decryption failed: ' . $this->processRunner->redact($process->getErrorOutput()));
+          throw new \RuntimeException('Decryption failed.');
         }
         $working_file = $temp_decrypted;
       }
@@ -94,7 +94,7 @@ class UnpackService {
       $this->output->writeln('<comment>Extracting archive</comment>');
       $process = $this->processRunner->run(['tar', '-xzf', $working_file, '-C', $extract_to]);
       if (!$process->isSuccessful()) {
-        throw new \RuntimeException('Extraction failed: ' . $this->processRunner->redact($process->getErrorOutput()));
+        throw new \RuntimeException('Extraction failed.');
       }
 
       // Check for a single top-level directory in extract_to that matches the archive name (common with our backups)

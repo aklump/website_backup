@@ -10,11 +10,14 @@ class ManifestService {
 
   private $manifest;
 
+  private $projectRoot;
+
   private $excludes = [];
 
-  public function __construct(string $config_dir, string $destination, array $manifest) {
+  public function __construct(string $config_dir, string $destination, array $manifest, string $project_root = '') {
     $this->configDir = rtrim($config_dir, '/');
     $this->destination = rtrim($destination, '/');
+    $this->projectRoot = rtrim($project_root, '/');
     $this->setManifest($manifest);
   }
 
@@ -45,19 +48,51 @@ class ManifestService {
       $paths[] = $pattern;
     }
 
+    if ($this->projectRoot) {
+      $check_root = rtrim(realpath($this->projectRoot) ?: $this->projectRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+      foreach ($paths as $path) {
+        $real_path = realpath($path) ?: $path;
+        $check_path = rtrim($real_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($check_path, $check_root)) {
+          throw new \RuntimeException(sprintf('Manifest item "%s" resolves to a path outside of the project root: %s', $pattern, $path));
+        }
+      }
+    }
+
     return $paths;
   }
 
   public function getCommands(): array {
     $includes = array_map(function ($item) {
-      return rtrim($item, '/');
+      $item = rtrim($item, '/');
+      if ($this->projectRoot) {
+        $check_root = rtrim(realpath($this->projectRoot) ?: $this->projectRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $real_path = realpath($item) ?: $item;
+        $check_path = rtrim($real_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($check_path, $check_root) && !str_starts_with($item, '!')) {
+          // This should have been caught by resolve() if used, but for safety in getCommands:
+          throw new \RuntimeException(sprintf('Manifest item "%s" is outside of the project root.', $item));
+        }
+      }
+
+      return $item;
     }, array_filter($this->manifest, function ($item) {
       return substr($item, 0, 1) !== '!';
     }));
     $includes = $this->handleGlobs($includes);
 
     $this->excludes = array_map(function ($item) {
-      return rtrim(ltrim($item, '!'), '/');
+      $item = rtrim(ltrim($item, '!'), '/');
+      if ($this->projectRoot) {
+        $check_root = rtrim(realpath($this->projectRoot) ?: $this->projectRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $real_path = realpath($item) ?: $item;
+        $check_path = rtrim($real_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($check_path, $check_root)) {
+          throw new \RuntimeException(sprintf('Manifest exclusion "%s" is outside of the project root.', $item));
+        }
+      }
+
+      return $item;
     }, array_filter($this->manifest, function ($item) {
       return substr($item, 0, 1) === '!';
     }));

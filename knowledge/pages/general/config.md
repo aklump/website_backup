@@ -17,6 +17,10 @@ bin/config/website_backup.yml
 
 This file is required and contains the core settings for the backup, such as the `manifest` (files to include/exclude), `database` connection details, and AWS settings.
 
+### S3 Bucket Recommendation
+
+**Use a dedicated S3 bucket.** Do not share the bucket with other projects or data. The pruning logic assumes it owns all backup artifacts in the bucket.
+
 You can override the default configuration file path using the `--config` global option. If the extension is omitted, the application will automatically try `.yml` and `.yaml`.
 
 ```bash

@@ -147,4 +147,65 @@ class ManifestServiceTest extends TestCase {
     $this->assertCount(1, $mkdir_commands);
     $this->assertEquals(['mkdir', '-p', $this->dest_dir . '/dir1/subdir'], reset($mkdir_commands));
   }
+
+  public function testResolveOutsideProjectRootThrowsException() {
+    $project_root = $this->source_dir;
+    $outside_dir = sys_get_temp_dir() . '/wb_outside_manifest_' . bin2hex(random_bytes(8));
+    mkdir($outside_dir, 0700, true);
+    touch($outside_dir . '/secret.txt');
+
+    try {
+      $service = new ManifestService($this->source_dir, $this->dest_dir, [], $project_root);
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage('outside of the project root');
+      $service->resolve($outside_dir . '/secret.txt');
+    } finally {
+      $files = array_diff(scandir($outside_dir), array('.', '..'));
+      foreach ($files as $file) {
+        unlink("$outside_dir/$file");
+      }
+      rmdir($outside_dir);
+    }
+  }
+
+  public function testGetCommandsOutsideProjectRootThrowsException() {
+    $project_root = $this->source_dir;
+    $outside_dir = sys_get_temp_dir() . '/wb_outside_manifest_cmd_' . bin2hex(random_bytes(8));
+    mkdir($outside_dir, 0700, true);
+    touch($outside_dir . '/secret.txt');
+
+    try {
+      $manifest = [$outside_dir . '/secret.txt'];
+      $service = new ManifestService($this->source_dir, $this->dest_dir, $manifest, $project_root);
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage('outside of the project root');
+      $service->getCommands();
+    } finally {
+      $files = array_diff(scandir($outside_dir), array('.', '..'));
+      foreach ($files as $file) {
+        unlink("$outside_dir/$file");
+      }
+      rmdir($outside_dir);
+    }
+  }
+
+  public function testResolveGlobOutsideProjectRootThrowsException() {
+    $project_root = $this->source_dir;
+    $outside_dir = sys_get_temp_dir() . '/wb_outside_glob_' . bin2hex(random_bytes(8));
+    mkdir($outside_dir, 0700, true);
+    touch($outside_dir . '/secret.txt');
+
+    try {
+      $service = new ManifestService($this->source_dir, $this->dest_dir, [], $project_root);
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage('outside of the project root');
+      $service->resolve($outside_dir . '/*.txt');
+    } finally {
+      $files = array_diff(scandir($outside_dir), array('.', '..'));
+      foreach ($files as $file) {
+        unlink("$outside_dir/$file");
+      }
+      rmdir($outside_dir);
+    }
+  }
 }

@@ -84,6 +84,23 @@ class DeletionHelpersTest extends TestCase {
     $helper($path, $this->test_dir, 'backup');
   }
 
+  public function testAssertSafeBackupArtifactPathBypassesSiblingPrefixTrick() {
+    $sibling_dir = $this->test_dir . '_evil';
+    $this->fs->mkdir($sibling_dir);
+    $path = $sibling_dir . '/backup--evil';
+    $this->fs->mkdir(dirname($path), 0700, true);
+    $this->fs->mkdir($path);
+
+    try {
+      $this->expectException(\InvalidArgumentException::class);
+      $this->expectExceptionMessage('outside the configured local backup directory');
+      $helper = new AssertSafeBackupArtifactPath();
+      $helper($path, $this->test_dir, 'backup');
+    } finally {
+      $this->fs->remove($sibling_dir);
+    }
+  }
+
   public function testRemoveDirectoryTreeSuccess() {
     $path = $this->test_dir . '/tree';
     $this->fs->mkdir($path . '/sub/dir');
@@ -103,6 +120,27 @@ class DeletionHelpersTest extends TestCase {
     $this->expectExceptionMessage('Path is not a directory');
     $helper = new RemoveDirectoryTree();
     $helper($path);
+  }
+
+  public function testRemoveDirectoryTreeFailsIfRelative() {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Path must be absolute');
+    $helper = new RemoveDirectoryTree();
+    $helper('some/relative/path');
+  }
+
+  public function testRemoveDirectoryTreeFailsIfEmpty() {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Invalid path for directory removal');
+    $helper = new RemoveDirectoryTree();
+    $helper('   ');
+  }
+
+  public function testRemoveDirectoryTreeFailsIfRoot() {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Invalid path for directory removal');
+    $helper = new RemoveDirectoryTree();
+    $helper('/');
   }
 
   public function testRemoveFileOrSymlinkSuccess() {

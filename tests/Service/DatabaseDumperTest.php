@@ -137,4 +137,26 @@ class DatabaseDumperTest extends TestCase {
 
     $dumper->dump(['name' => 'db'], 'output.sql');
   }
+
+  public function testDumpFailsWithInvalidDatabaseName() {
+    $mock_runner = $this->createMock(ProcessRunner::class);
+    $dumper = new DatabaseDumper($mock_runner);
+    $dumper->setTempDir($this->test_dir);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Invalid database name');
+
+    $dumper->dump(['name' => 'db; DROP TABLE students;'], 'output.sql');
+  }
+
+  public function testDumpFailsWithInvalidCacheTablePattern() {
+    $mock_runner = $this->createMock(ProcessRunner::class);
+    $dumper = new DatabaseDumper($mock_runner);
+    $dumper->setTempDir($this->test_dir);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Invalid cache table pattern');
+
+    $dumper->dump(['name' => 'db'], 'output.sql', ['cache_table; --']);
+  }
 }

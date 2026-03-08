@@ -1,7 +1,9 @@
 # The region for the bucket.
 aws_region: us-west-1
 
-# The name of the destination bucket
+# The name of the destination bucket. Use a DEDICATED bucket for backups.
+# DO NOT SHARE THE BUCKET with other applications or data because of the
+# retention policy, which deletes files.
 aws_bucket: example
 
 # The AWS access key and secret key to use for the backup.

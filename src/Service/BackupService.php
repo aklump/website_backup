@@ -100,7 +100,8 @@ class BackupService {
         $start = microtime(TRUE);
         $config_path = $this->config['__config_path'] ?? '';
         $config_dir = $config_path ? dirname($config_path) : getcwd();
-        $manifest_service = new ManifestService($config_dir, $staging_dir, $this->config['manifest']);
+        $project_root = $this->config['__project_root'] ?? '';
+        $manifest_service = new ManifestService($config_dir, $staging_dir, $this->config['manifest'], $project_root);
         $commands = $manifest_service->getCommands();
         foreach ($commands as $cmd) {
           $this->output->writeln(sprintf(' <info>*</info> %s', implode(' ', $cmd)), OutputInterface::VERBOSITY_DEBUG);
@@ -163,7 +164,7 @@ class BackupService {
             );
 
             if (!$process->isSuccessful()) {
-              throw new \RuntimeException('Could not encrypt object: ' . $this->processRunner->redact($process->getErrorOutput()));
+              throw new \RuntimeException('Could not encrypt object.');
             }
             $elapsed = round(microtime(TRUE) - $start, 2);
             $this->output->writeln(sprintf(' <info>*</info> %s seconds', $elapsed));
@@ -262,7 +263,7 @@ class BackupService {
           );
 
           if (!$process->isSuccessful()) {
-            throw new \RuntimeException('Could not encrypt object: ' . $this->processRunner->redact($process->getErrorOutput()));
+            throw new \RuntimeException('Could not encrypt object.');
           }
           $elapsed = round(microtime(TRUE) - $start, 2);
           $this->output->writeln(sprintf(' <info>*</info> %s seconds', $elapsed));

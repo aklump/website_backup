@@ -24,6 +24,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  * @uses \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig
  * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
  * @uses \AKlump\WebsiteBackup\Service\S3Service
+ * @uses \AKlump\WebsiteBackup\Helper\RemoveFileOrSymlink
  */
 class BackupCommandTest extends TestCase {
 

@@ -4,6 +4,7 @@ namespace AKlump\WebsiteBackup\Command;
 
 use AKlump\WebsiteBackup\Config\ConfigLoader;
 use AKlump\WebsiteBackup\Helper\GetInstalledInRoot;
+use AKlump\WebsiteBackup\Helper\GetShortPath;
 use AKlump\WebsiteBackup\Service\ManifestService;
 use AKlump\WebsiteBackup\Service\ProcessRunner;
 use AKlump\WebsiteBackup\Service\S3Service;
@@ -31,13 +32,14 @@ class HealthcheckCommand extends Command {
     $root = (new GetInstalledInRoot())();
     if (!$root && !$input->getOption('config')) {
       $io->error('Could not find the application root; did you run install yet? Make sure bin/config/website_backup.yml exists.');
+
       return Command::FAILURE;
     }
 
     $config_path = $input->getOption('config');
     $env_path = $input->getOption('env-file');
     $loader = new ConfigLoader($root, $config_path, $env_path);
-    $all_passed = true;
+    $all_passed = TRUE;
 
     // 1. Configuration Check
     $output->writeln('<comment>Checking Configuration</comment>');
@@ -51,7 +53,12 @@ class HealthcheckCommand extends Command {
       $retention = $config['aws_retention'] ?? [];
       if ($retention) {
         $all_zero = TRUE;
-        foreach (['keep_all_for_days', 'keep_latest_daily_for_days', 'keep_latest_monthly_for_months', 'keep_latest_yearly_for_years'] as $key) {
+        foreach ([
+                   'keep_all_for_days',
+                   'keep_latest_daily_for_days',
+                   'keep_latest_monthly_for_months',
+                   'keep_latest_yearly_for_years',
+                 ] as $key) {
           if (!empty($retention[$key])) {
             $all_zero = FALSE;
             break;
@@ -61,12 +68,14 @@ class HealthcheckCommand extends Command {
           $output->writeln(' <comment>!</comment> All retention settings are set to 0. This will cause the S3 bucket to continue to grow in size as no backups will ever be pruned.');
         }
       }
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $output->writeln(' <error>✗</error> Configuration check failed: ' . $e->getMessage());
-      $all_passed = false;
+      $all_passed = FALSE;
       // If config fails, we might not be able to proceed with other checks.
       if (empty($config)) {
         $io->error('Fatal: Could not load configuration.');
+
         return Command::FAILURE;
       }
     }
@@ -77,13 +86,25 @@ class HealthcheckCommand extends Command {
     $output->writeln('<comment>-----------------</comment>');
     $config_path = $config['__config_path'] ?? '';
     $config_dir = $config_path ? dirname($config_path) : getcwd();
-    $manifest_service = new ManifestService($config_dir, '', $config['manifest']);
+    $project_root = $config['__project_root'] ?? $root;
+    $manifest_service = new ManifestService($config_dir, '', $config['manifest'], $project_root);
     foreach ($manifest_service->getManifestItems() as $item) {
-      $paths = $manifest_service->resolve($item);
-      if (empty($paths)) {
-        $output->writeln(sprintf(' <info>?</info> %s — No files found matching this pattern.', $item));
-      } else {
-        $output->writeln(sprintf(' <info>✓</info> %s', $item));
+      try {
+        $paths = $manifest_service->resolve($item);
+        $item_short_path = (new GetShortPath())($item);
+        if (substr($item, 0, 1) === '!') {
+          $item_short_path = '!' . (new GetShortPath())(substr($item, 1));
+        }
+        if (empty($paths)) {
+          $output->writeln(sprintf(' <info>?</info> %s — No files found matching this pattern.', $item_short_path));
+        }
+        else {
+          $output->writeln(sprintf(' <info>✓</info> %s', $item_short_path));
+        }
+      }
+      catch (\Exception $e) {
+        $output->writeln(sprintf(' <error>✗</error> %s — %s', $item, $e->getMessage()));
+        $all_passed = FALSE;
       }
     }
 
@@ -95,10 +116,11 @@ class HealthcheckCommand extends Command {
       try {
         $this->checkDatabase($config['database']);
         $output->writeln(' <info>✓</info> Successfully connected to the database.');
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $output->writeln(' <error>✗</error> Database connectivity failed: ' . $e->getMessage());
         $output->writeln('   <comment>Note: Make sure your database URL is correct and that "mysql" client is installed.</comment>');
-        $all_passed = false;
+        $all_passed = FALSE;
       }
     }
 
@@ -110,10 +132,11 @@ class HealthcheckCommand extends Command {
       try {
         $this->checkS3($config);
         $output->writeln(' <info>✓</info> Successfully connected to S3 and bucket is accessible.');
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $output->writeln(' <error>✗</error> S3 connectivity failed: ' . $e->getMessage());
         $output->writeln('   <comment>Note: Check your AWS credentials, region, and bucket name.</comment>');
-        $all_passed = false;
+        $all_passed = FALSE;
       }
     }
     elseif (!empty($config['aws_bucket'])) {
@@ -121,7 +144,7 @@ class HealthcheckCommand extends Command {
       $output->writeln('<comment>Checking S3 Connectivity</comment>');
       $output->writeln('<comment>------------------------</comment>');
       $output->writeln(' <error>✗</error> S3 connectivity check skipped because AWS credentials are missing.');
-      $all_passed = false;
+      $all_passed = FALSE;
     }
 
     // 5. System Tools Check
@@ -135,21 +158,25 @@ class HealthcheckCommand extends Command {
       'mysqldump' => 'Required for database backups.',
     ];
     $process_runner = new ProcessRunner();
-    $openssl_available = false;
+    $openssl_available = FALSE;
 
     foreach ($tools as $tool => $description) {
       try {
-        $process = $process_runner->run([$tool, $tool === 'openssl' ? 'version' : '--version']);
+        $process = $process_runner->run([
+          $tool,
+          $tool === 'openssl' ? 'version' : '--version',
+        ]);
         if ($process->isSuccessful()) {
           $output->writeln(sprintf(' <info>✓</info> %s', $tool));
           if ($tool === 'openssl') {
-            $openssl_available = true;
+            $openssl_available = TRUE;
           }
         }
         else {
           $output->writeln(sprintf(' <error>✗</error> %s — %s', $tool, $description));
         }
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $output->writeln(sprintf(' <error>✗</error> %s — %s', $tool, $description));
       }
     }
@@ -170,9 +197,10 @@ class HealthcheckCommand extends Command {
         }
 
         $output->writeln(' <info>✓</info> Encryption password is set and OpenSSL is available.');
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $output->writeln(' <error>✗</error> Encryption check failed: ' . $e->getMessage());
-        $all_passed = false;
+        $all_passed = FALSE;
       }
     }
 
@@ -190,20 +218,25 @@ class HealthcheckCommand extends Command {
         }
         $temp_file_factory->cleanup($temp_path);
         $output->writeln(' <info>✓</info> Secure temporary file creation is working correctly.');
-      } else {
+      }
+      else {
         throw new \RuntimeException('Failed to create temporary security test file.');
       }
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $output->writeln(' <error>✗</error> Security check failed: ' . $e->getMessage());
-      $all_passed = false;
+      $all_passed = FALSE;
     }
 
     $output->writeln('');
     if ($all_passed) {
       $io->success('All health checks passed!');
+
       return Command::SUCCESS;
-    } else {
+    }
+    else {
       $io->error('Some health checks failed.');
+
       return Command::FAILURE;
     }
   }

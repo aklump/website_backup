@@ -59,7 +59,10 @@ class ConfigLoader {
     // 2. Load from YAML config
     $config_path = $this->getConfigPath();
     $config_dir = dirname($config_path);
-    $config = ['__config_path' => $config_path];
+    $config = [
+      '__config_path' => $config_path,
+      '__project_root' => $this->appRoot,
+    ];
 
     if (file_exists($config_path)) {
       if (!is_readable($config_path)) {
@@ -145,6 +148,10 @@ class ConfigLoader {
     }
     if (empty($config['database']['user'])) {
       throw new \RuntimeException(sprintf('Database user is missing in URL: %s', $db_url));
+    }
+
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $config['database']['name'])) {
+      throw new \RuntimeException(sprintf('Invalid database name: %s. Only letters, numbers, and underscores are allowed.', $config['database']['name']));
     }
 
     return $config;
