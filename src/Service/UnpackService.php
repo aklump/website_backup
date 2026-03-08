@@ -9,12 +9,22 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class UnpackService {
 
-  private $config;
-  private $output;
-  private $processRunner;
-  private $getShortPath;
-  private $fs;
-  private $tempDirectoryFactory;
+  /**
+   * @var \AKlump\WebsiteBackup\Service\SystemService
+   */
+  protected SystemService $systemService;
+
+  private array $config;
+
+  private OutputInterface $output;
+
+  private ProcessRunner $processRunner;
+
+  private GetShortPath $getShortPath;
+
+  private Filesystem $fs;
+
+  private TempDirectoryFactory $tempDirectoryFactory;
 
   public function __construct(array $config, OutputInterface $output) {
     $this->config = $config;
@@ -23,6 +33,7 @@ class UnpackService {
     $this->getShortPath = new GetShortPath();
     $this->fs = new Filesystem();
     $this->tempDirectoryFactory = new TempDirectoryFactory();
+    $this->systemService = new SystemService($this->processRunner);
   }
 
   /**
@@ -34,7 +45,7 @@ class UnpackService {
    *
    * @return string The path to the unpacked directory.
    */
-  public function unpack(string $source_path, bool $force = false, bool $delete_source = false): string {
+  public function unpack(string $source_path, bool $force = FALSE, bool $delete_source = FALSE): string {
     if (!$this->fs->exists($source_path)) {
       throw new \RuntimeException(sprintf('Source file does not exist: %s', $source_path));
     }
@@ -53,7 +64,8 @@ class UnpackService {
     $dest_name = $filename;
     if ($is_encrypted) {
       $dest_name = substr($dest_name, 0, -strlen('.tar.gz.enc'));
-    } else {
+    }
+    else {
       $dest_name = substr($dest_name, 0, -strlen('.tar.gz'));
     }
     $dest_path = dirname($source_path) . '/' . $dest_name;
@@ -81,8 +93,21 @@ class UnpackService {
         }
         $temp_decrypted = $temp_base . '/decrypted.tar.gz';
         $process = $this->processRunner->run(
-          ['openssl', 'enc', '-d', '-aes-256-cbc', '-pbkdf2', '-salt', '-in', $source_path, '-out', $temp_decrypted, '-pass', 'env:WEBSITE_BACKUP_ENCRYPTION_PASSWORD'],
-          null,
+          [
+            'openssl',
+            'enc',
+            '-d',
+            '-aes-256-cbc',
+            '-pbkdf2',
+            '-salt',
+            '-in',
+            $source_path,
+            '-out',
+            $temp_decrypted,
+            '-pass',
+            'env:WEBSITE_BACKUP_ENCRYPTION_PASSWORD',
+          ],
+          NULL,
           ['WEBSITE_BACKUP_ENCRYPTION_PASSWORD' => $this->config['encryption']['password']]
         );
         if (!$process->isSuccessful()) {
@@ -92,7 +117,13 @@ class UnpackService {
       }
 
       $this->output->writeln('<comment>Extracting archive</comment>');
-      $process = $this->processRunner->run(['tar', '-xzf', $working_file, '-C', $extract_to]);
+      $process = $this->processRunner->run([
+        'tar',
+        '-xzf',
+        $working_file,
+        '-C',
+        $extract_to,
+      ]);
       if (!$process->isSuccessful()) {
         throw new \RuntimeException('Extraction failed.');
       }
@@ -104,10 +135,12 @@ class UnpackService {
         $single_path = $extract_to . '/' . $single_item;
         if (is_dir($single_path)) {
           $this->fs->rename($single_path, $dest_path);
-        } else {
+        }
+        else {
           $this->fs->rename($extract_to, $dest_path);
         }
-      } else {
+      }
+      else {
         $this->fs->rename($extract_to, $dest_path);
       }
 
@@ -117,7 +150,8 @@ class UnpackService {
         $this->fs->remove($source_path);
       }
 
-    } finally {
+    }
+    finally {
       $this->tempDirectoryFactory->cleanup($temp_base);
     }
 
@@ -125,16 +159,12 @@ class UnpackService {
   }
 
   private function validateDependencies(bool $require_openssl): void {
-    if (!$this->commandExists('tar')) {
+    if (!$this->systemService->commandExists('tar')) {
       throw new \RuntimeException('The "tar" tool is required but not found.');
     }
-    if ($require_openssl && !$this->commandExists('openssl')) {
+    if ($require_openssl && !$this->systemService->commandExists('openssl')) {
       throw new \RuntimeException('The "openssl" tool is required for encrypted backups but not found.');
     }
   }
 
-  private function commandExists(string $cmd): bool {
-    $process = $this->processRunner->run(['command', '-v', $cmd]);
-    return $process->isSuccessful();
-  }
 }

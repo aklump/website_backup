@@ -17,6 +17,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
  * @uses \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig
  * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
+ * @uses \AKlump\WebsiteBackup\Service\SystemService
  */
 class HealthcheckCommandTest extends TestCase {
 
@@ -264,9 +265,7 @@ YAML;
     $this->assertEquals(1, $exit_code);
     $output = $command_tester->getDisplay();
     $this->assertStringContainsString('Checking Manifest', $output);
-    // Realpath on macOS might return /private/var...
-    $expected_path = realpath($this->test_dir) . '/non_existent_file.txt';
-    $this->assertStringContainsString('? ' . $expected_path . ' — No files found matching this pattern.', $output);
+    $this->assertStringContainsString('? ./non_existent_file.txt — No files found matching this pattern.', $output);
   }
 
   public function testExecuteSucceedsWithValidManifest() {
@@ -299,7 +298,6 @@ YAML;
     // Manifest should pass even if database or S3 fail (though we expect them to fail in test)
     // We just want to check that it reports a pass for the manifest section.
     $this->assertStringContainsString('Checking Manifest', $output);
-    $expected_path = realpath($this->test_dir) . '/valid_file.txt';
-    $this->assertStringContainsString('✓ ' . $expected_path, $output);
+    $this->assertStringContainsString('✓ ./valid_file.txt', $output);
   }
 }

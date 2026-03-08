@@ -13,6 +13,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
  * @uses \AKlump\WebsiteBackup\Service\TempDirectoryFactory
  * @uses \AKlump\WebsiteBackup\Helper\RemoveDirectoryTree
+ * @uses \AKlump\WebsiteBackup\Service\SystemService
  */
 class UnpackServiceTest extends TestCase {
 

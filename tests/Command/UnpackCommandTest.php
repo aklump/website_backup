@@ -16,6 +16,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
  * @uses \AKlump\WebsiteBackup\Helper\GetInstalledInRoot
  * @uses \AKlump\WebsiteBackup\Service\TempDirectoryFactory
+ * @uses \AKlump\WebsiteBackup\Service\SystemService
  */
 class UnpackCommandTest extends TestCase {
 

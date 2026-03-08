@@ -8,6 +8,7 @@ use AKlump\WebsiteBackup\Helper\GetShortPath;
 use AKlump\WebsiteBackup\Service\ManifestService;
 use AKlump\WebsiteBackup\Service\ProcessRunner;
 use AKlump\WebsiteBackup\Service\S3Service;
+use AKlump\WebsiteBackup\Service\SystemService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -158,15 +159,12 @@ class HealthcheckCommand extends Command {
       'mysqldump' => 'Required for database backups.',
     ];
     $process_runner = new ProcessRunner();
+    $system_service = new SystemService($process_runner);
     $openssl_available = FALSE;
-
     foreach ($tools as $tool => $description) {
       try {
-        $process = $process_runner->run([
-          $tool,
-          $tool === 'openssl' ? 'version' : '--version',
-        ]);
-        if ($process->isSuccessful()) {
+        $exists = $system_service->commandExists($tool);
+        if ($exists) {
           $output->writeln(sprintf(' <info>✓</info> %s', $tool));
           if ($tool === 'openssl') {
             $openssl_available = TRUE;
