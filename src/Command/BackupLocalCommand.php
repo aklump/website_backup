@@ -18,7 +18,7 @@ class BackupLocalCommand extends Command {
   protected function configure(): void {
     $this
       ->setDescription('Backs up the website to a local directory.')
-      ->addOption('dir', NULL, InputOption::VALUE_REQUIRED, 'Save the backup to the specified existing directory.')
+      ->addOption('dir', NULL, InputOption::VALUE_REQUIRED, 'Local backup directory. If omitted, directories.local from config.yml is used.')
       ->addOption('latest', NULL, InputOption::VALUE_NONE, 'Create a "latest" symlink when saving locally.')
       ->addOption('database', NULL, InputOption::VALUE_NONE, 'Backup only the database.')
       ->addOption('files', NULL, InputOption::VALUE_NONE, 'Backup only the files.')
@@ -32,12 +32,17 @@ class BackupLocalCommand extends Command {
     $loader = new ConfigLoader($root);
     $config = $loader->load();
 
-    $dir = $input->getOption('dir');
+    $dir = $input->getOption('dir') ?: ($config['directories']['local'] ?? NULL);
     if (!$dir) {
-      throw new \RuntimeException('The --dir option is required.');
+      throw new \RuntimeException('No local backup directory was provided. Use --dir or set directories.local in config.yml.');
     }
     if (!is_dir($dir)) {
-      throw new \RuntimeException(sprintf('The directory specified by --dir does not exist or is not a directory: %s', $dir));
+      if (!@mkdir($dir, 0700, TRUE) && !is_dir($dir)) {
+        throw new \RuntimeException(sprintf('The directory specified by --dir could not be created: %s', $dir));
+      }
+    }
+    if (!is_writable($dir)) {
+      throw new \RuntimeException(sprintf('The directory is not writable: %s', $dir));
     }
 
     $gzip = $input->getOption('gzip');

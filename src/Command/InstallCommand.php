@@ -43,7 +43,7 @@ class InstallCommand extends Command {
 
     $target_dir = $cwd . '/bin/config';
     if (!is_dir($target_dir)) {
-      mkdir($target_dir, 0755, TRUE);
+      mkdir($target_dir, 0700, TRUE);
     }
 
     $target_config = $target_dir . '/website_backup.yml';

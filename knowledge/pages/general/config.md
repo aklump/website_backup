@@ -115,6 +115,17 @@ php bin/website_backup backup:local --dir=/path/to/backups
 php bin/website_backup backup:local --dir=/path/to/backups --gzip
 ```
 
+### Fallback Local Directory
+
+You can configure a default local backup directory in `bin/config/website_backup.yml`. If `directories.local` is set, the `--dir` option becomes optional for `backup:local`.
+
+```yaml
+directories:
+  local: /private/backups
+```
+
+The `--dir` CLI option will always override the configuration value.
+
 S3 backups are always compressed and do not support directory output.
 
 ## Archive Encryption

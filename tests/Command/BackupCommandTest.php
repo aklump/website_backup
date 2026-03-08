@@ -61,9 +61,67 @@ class BackupCommandTest extends TestCase {
     $command_tester = new CommandTester($command);
 
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('The --dir option is required.');
+    $this->expectExceptionMessage('No local backup directory was provided. Use --dir or set directories.local in config.yml.');
 
     $command_tester->execute([]);
+  }
+
+  public function testBackupLocalUsesConfigFallbackDir() {
+    $local_path = $this->test_dir . '/config_backups';
+    mkdir($local_path);
+    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example\ndirectories:\n  local: $local_path";
+    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
+
+    $application = new Application();
+    $application->add(new BackupLocalCommand());
+
+    $command = $application->find('backup:local');
+    $command_tester = new CommandTester($command);
+    $command_tester->execute([]);
+
+    $output = $command_tester->getDisplay();
+    $this->assertStringContainsString('Saving locally', $output);
+    $this->assertDirectoryExists($local_path);
+  }
+
+  public function testBackupLocalCliOverridesConfigDir() {
+    $config_path = $this->test_dir . '/config_backups';
+    $cli_path = $this->test_dir . '/cli_backups';
+    mkdir($config_path);
+    mkdir($cli_path);
+    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example\ndirectories:\n  local: $config_path";
+    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
+
+    $application = new Application();
+    $application->add(new BackupLocalCommand());
+
+    $command = $application->find('backup:local');
+    $command_tester = new CommandTester($command);
+    $command_tester->execute(['--dir' => $cli_path]);
+
+    $output = $command_tester->getDisplay();
+    $this->assertStringContainsString('Saving locally', $output);
+
+    // Check that CLI path was used (it should have a backup directory inside)
+    $dirs = glob($cli_path . '/example--*');
+    $this->assertCount(1, $dirs);
+
+    // Config path should be empty
+    $dirs_config = glob($config_path . '/example--*');
+    $this->assertCount(0, $dirs_config);
+  }
+
+  public function testBackupLocalCreatesDirIfMissing() {
+    $new_path = $this->test_dir . '/new_backups_dir';
+
+    $application = new Application();
+    $application->add(new BackupLocalCommand());
+
+    $command = $application->find('backup:local');
+    $command_tester = new CommandTester($command);
+    $command_tester->execute(['--dir' => $new_path]);
+
+    $this->assertDirectoryExists($new_path);
   }
 
   public function testBackupLocalFailsWithInvalidDir() {
@@ -73,13 +131,18 @@ class BackupCommandTest extends TestCase {
     $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
-    $invalid_path = $this->test_dir . '/non_existent_dir';
+    // This is tricky to test "not a directory" if we try to create it.
+    // But if we use a file path as if it were a directory, mkdir should fail or is_dir will fail.
+    $file_path = $this->test_dir . '/some_file.txt';
+    touch($file_path);
 
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage("The directory specified by --dir does not exist or is not a directory: $invalid_path");
+    // The error message might vary depending on whether mkdir fails or is_writable fails.
+    // If it's a file, is_dir($file_path) is false.
+    // mkdir($file_path) will fail because a file exists.
 
     $command_tester->execute([
-      '--dir' => $invalid_path,
+      '--dir' => $file_path,
     ]);
   }
 

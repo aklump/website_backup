@@ -54,6 +54,9 @@ encryption:
   password: ${WEBSITE_BACKUP_ENCRYPTION_PASSWORD}
   s3: true
 
+directories:
+  local: /private/backups
+
 notifications:
   email:
     to:
