@@ -37,7 +37,7 @@ class ConfigLoaderTest extends TestCase {
 
   public function testLoadFromYaml() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
-    file_put_contents($config_path, "aws_region: us-east-1\naws_bucket: my-bucket\npath_to_app: " . $this->test_app_root . '/app_path');
+    file_put_contents($config_path, "aws_region: us-east-1\naws_bucket: my-bucket");
 
     $other_config_path = $this->test_app_root . '/bin/config/website_backup.local.yml';
     file_put_contents($other_config_path, "aws_region: us-west-2");
@@ -51,7 +51,7 @@ class ConfigLoaderTest extends TestCase {
 
   public function testEnvOverrides() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
-    file_put_contents($config_path, "aws_region: \${WEBSITE_BACKUP_AWS_REGION}\naws_bucket: my-bucket\npath_to_app: " . $this->test_app_root . '/app_path');
+    file_put_contents($config_path, "aws_region: \${WEBSITE_BACKUP_AWS_REGION}\naws_bucket: my-bucket");
 
     putenv('WEBSITE_BACKUP_AWS_REGION=us-west-2');
 
@@ -69,9 +69,9 @@ class ConfigLoaderTest extends TestCase {
     file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_all_for_days: 1\n  keep_latest_daily_for_days: 1\n  keep_latest_monthly_for_months: 1\n  keep_latest_yearly_for_years: 1\ndatabase:\n  url: \${DATABASE_URL}");
 
     $loader = new ConfigLoader($this->test_app_root);
+    $config = $loader->load();
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('database.url');
-    $config = $loader->load();
     $loader->validate($config);
   }
 
@@ -98,9 +98,9 @@ class ConfigLoaderTest extends TestCase {
     file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_all_for_days: 1\n  keep_latest_daily_for_days: 1\n  keep_latest_monthly_for_months: 1\n  keep_latest_yearly_for_years: 1\ndatabase: { handler: null }");
 
     $loader = new ConfigLoader($this->test_app_root);
+    $config = $loader->load();
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('database.url');
-    $config = $loader->load();
     $loader->validate($config);
   }
 
@@ -122,7 +122,6 @@ class ConfigLoaderTest extends TestCase {
   public function testValidateFailsWhenMissingRequired() {
     $loader = new ConfigLoader($this->test_app_root);
     $config = [
-      'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
       'database' => [
         'url' => 'mysql://user:pass@host/db',
@@ -154,7 +153,6 @@ class ConfigLoaderTest extends TestCase {
   public function testValidateNotify() {
     $loader = new ConfigLoader($this->test_app_root);
     $base_config = [
-      'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
       'database' => [
         'url' => 'mysql://user:pass@host/db',
@@ -223,7 +221,6 @@ class ConfigLoaderTest extends TestCase {
   public function testValidateEncryption() {
     $loader = new ConfigLoader($this->test_app_root);
     $base_config = [
-      'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
       'database' => [
         'url' => 'mysql://user:pass@host/db',
@@ -271,7 +268,6 @@ class ConfigLoaderTest extends TestCase {
   public function testValidateRetention() {
     $loader = new ConfigLoader($this->test_app_root);
     $base_config = [
-      'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
       'database' => [
         'url' => 'mysql://user:pass@host/db',
@@ -377,7 +373,7 @@ class ConfigLoaderTest extends TestCase {
 
   public function testCustomConfigPath() {
     $custom_config = $this->test_app_root . '/custom_config.yml';
-    file_put_contents($custom_config, "aws_region: us-north-1\naws_bucket: custom-bucket\npath_to_app: " . $this->test_app_root . '/app_path' . "\ndatabase: { url: 'mysql://user:pass@host/db' }");
+    file_put_contents($custom_config, "aws_region: us-north-1\naws_bucket: custom-bucket\ndatabase: { url: 'mysql://user:pass@host/db' }");
 
     $loader = new ConfigLoader($this->test_app_root, $custom_config);
     $config = $loader->load();
@@ -388,7 +384,7 @@ class ConfigLoaderTest extends TestCase {
 
   public function testCustomEnvPath() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
-    file_put_contents($config_path, "aws_region: \${CUSTOM_REGION}\naws_bucket: bucket\npath_to_app: " . $this->test_app_root . '/app_path' . "\ndatabase: { url: 'mysql://user:pass@host/db' }");
+    file_put_contents($config_path, "aws_region: \${CUSTOM_REGION}\naws_bucket: bucket\ndatabase: { url: 'mysql://user:pass@host/db' }");
 
     $custom_env = $this->test_app_root . '/custom.env';
     file_put_contents($custom_env, "CUSTOM_REGION=us-south-1");
@@ -435,12 +431,37 @@ class ConfigLoaderTest extends TestCase {
    */
   public function testFlexibleConfigPath(string $filename, string $actual_file) {
     $config_path = $this->test_app_root . '/' . $actual_file;
-    file_put_contents($config_path, "aws_region: flexible-region\naws_bucket: bucket\npath_to_app: " . $this->test_app_root . '/app_path' . "\ndatabase: { url: 'mysql://user:pass@host/db' }");
+    file_put_contents($config_path, "aws_region: flexible-region\naws_bucket: bucket\ndatabase: { url: 'mysql://user:pass@host/db' }");
 
     $loader = new ConfigLoader($this->test_app_root, $this->test_app_root . '/' . $filename);
     $config = $loader->load();
 
     $this->assertEquals('flexible-region', $config['aws_region']);
+  }
+
+  public function testProjectRootTokenExpansion() {
+    $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
+    file_put_contents($config_path, "manifest:\n  - \${PROJECT_ROOT}/web/sites/*/files/");
+
+    $loader = new ConfigLoader($this->test_app_root);
+    $config = $loader->load();
+
+    $this->assertEquals([$this->test_app_root . '/web/sites/*/files/'], $config['manifest']);
+  }
+
+  public function testConfigRelativePathNormalization() {
+    $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
+    file_put_contents($config_path, "directories:\n  local: ../../backups\nmanifest:\n  - ../web/files\n  - \"!../web/private\"");
+
+    $loader = new ConfigLoader($this->test_app_root);
+    $config = $loader->load();
+
+    $config_dir = dirname($config_path);
+    $this->assertEquals($config_dir . '/../../backups', $config['directories']['local']);
+    $this->assertEquals([
+      $config_dir . '/../web/files',
+      '!' . $config_dir . '/../web/private',
+    ], $config['manifest']);
   }
 
   public function providerTestFlexibleConfigPath(): array {

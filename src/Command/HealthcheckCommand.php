@@ -75,7 +75,9 @@ class HealthcheckCommand extends Command {
     $output->writeln('');
     $output->writeln('<comment>Checking Manifest</comment>');
     $output->writeln('<comment>-----------------</comment>');
-    $manifest_service = new ManifestService($config['path_to_app'], '', $config['manifest']);
+    $config_path = $config['__config_path'] ?? '';
+    $config_dir = $config_path ? dirname($config_path) : getcwd();
+    $manifest_service = new ManifestService($config_dir, '', $config['manifest']);
     foreach ($manifest_service->getManifestItems() as $item) {
       $paths = $manifest_service->resolve($item);
       if (empty($paths)) {

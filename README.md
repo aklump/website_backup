@@ -31,7 +31,7 @@ The tool is designed for repeatable CLI use with configuration in YAML and secre
 1. Require this package:
    
     ```
-    composer require aklump/website-backup:^0.1
+    composer require aklump/website-backup:^0.0
     ```
 
 ## Quick Start

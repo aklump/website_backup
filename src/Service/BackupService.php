@@ -95,7 +95,9 @@ class BackupService {
       if ($has_files || !$has_database) {
         $this->output->writeln('<comment>Cherry-picking files</comment>');
         $start = microtime(TRUE);
-        $manifest_service = new ManifestService($this->config['path_to_app'], $staging_dir, $this->config['manifest']);
+        $config_path = $this->config['__config_path'] ?? '';
+        $config_dir = $config_path ? dirname($config_path) : getcwd();
+        $manifest_service = new ManifestService($config_dir, $staging_dir, $this->config['manifest']);
         $commands = $manifest_service->getCommands();
         foreach ($commands as $cmd) {
           $this->output->writeln(sprintf(' <info>*</info> %s', implode(' ', $cmd)), OutputInterface::VERBOSITY_DEBUG);

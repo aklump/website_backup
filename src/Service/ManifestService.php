@@ -4,7 +4,7 @@ namespace AKlump\WebsiteBackup\Service;
 
 class ManifestService {
 
-  private $source;
+  private $configDir;
 
   private $destination;
 
@@ -12,18 +12,13 @@ class ManifestService {
 
   private $excludes = [];
 
-  public function __construct(string $source, string $destination, array $manifest) {
-    $this->source = rtrim($source, '/');
+  public function __construct(string $config_dir, string $destination, array $manifest) {
+    $this->configDir = rtrim($config_dir, '/');
     $this->destination = rtrim($destination, '/');
     $this->setManifest($manifest);
   }
 
   private function setManifest(array $manifest_items): void {
-    foreach ($manifest_items as $item) {
-      if (substr($item, 0, 1) === '/' || substr($item, 0, 2) === '!/') {
-        throw new \InvalidArgumentException(sprintf('Incorrect manifest item "%s". Only paths relative to config var "path_to_app" are allowed in the manifest.', $item));
-      }
-    }
     $this->manifest = array_unique($manifest_items);
   }
 
@@ -42,12 +37,12 @@ class ManifestService {
     $pattern = ltrim($pattern, '!');
     $paths = [];
     if (strpos($pattern, '*') !== false) {
-      $globbed = glob($this->source . '/' . $pattern);
+      $globbed = glob($pattern);
       if ($globbed) {
         $paths = $globbed;
       }
-    } elseif (file_exists($this->source . '/' . $pattern)) {
-      $paths[] = $this->source . '/' . $pattern;
+    } elseif (file_exists($pattern)) {
+      $paths[] = $pattern;
     }
 
     return $paths;
@@ -70,28 +65,51 @@ class ManifestService {
 
     $commands = [];
     foreach ($includes as $item) {
-      $source = $this->source . '/' . $item;
+      $source = $item;
+      $relative_path = $this->getRelativePath($source);
+
       if (is_file($source)) {
-        $dir = dirname($this->destination . '/' . $item);
+        $dir = dirname($this->destination . '/' . $relative_path);
         $commands['mkdir'][$dir] = [$dir];
-        $commands['cp'][] = [$source, $this->destination . '/' . $item];
+        $commands['cp'][] = [$source, $this->destination . '/' . $relative_path];
       }
       elseif (is_dir($source)) {
-        $dest_dir = $this->destination . '/' . $item;
+        $dest_dir = $this->destination . '/' . $relative_path;
         $commands['mkdir'][$dest_dir] = [$dest_dir];
 
         $rsync_args = [
-          $this->source . '/' . trim($item, '/') . '/',
-          $this->destination . '/' . trim($item, '/') . '/',
+          rtrim($source, '/') . '/',
+          rtrim($dest_dir, '/') . '/',
         ];
         foreach ($this->pluckExcludes($item) as $exclusion) {
           $rsync_args[] = '--exclude=' . $exclusion;
         }
         $commands['rsync'][] = $rsync_args;
       }
+      else {
+        // Log or handle missing source file/directory if needed
+        // For now, we follow previous behavior of skipping if resolve didn't find it
+        // but resolve is called before getCommands in some flows.
+      }
     }
 
     return $this->prepareCommands($commands);
+  }
+
+  private function getRelativePath(string $path): string {
+    $real_path = realpath($path) ?: $path;
+    $real_config_dir = realpath($this->configDir) ?: $this->configDir;
+
+    $norm_path = preg_replace('|^/private/var/|', '/var/', $real_path);
+    $norm_config_dir = preg_replace('|^/private/var/|', '/var/', $real_config_dir);
+
+    if (str_starts_with($norm_path, $norm_config_dir)) {
+      $relative = substr($norm_path, strlen($norm_config_dir));
+
+      return ltrim($relative, '/');
+    }
+
+    return basename($path);
   }
 
   private function prepareCommands(array $commands): array {
@@ -135,9 +153,9 @@ class ManifestService {
     $revised = [];
     foreach ($items as $item) {
       if (strstr($item, '*') !== FALSE) {
-        $globbed = glob($this->source . '/' . $item);
+        $globbed = glob($item);
         foreach ($globbed as $g) {
-          $revised[] = substr($g, strlen($this->source) + 1);
+          $revised[] = $g;
         }
       }
       else {

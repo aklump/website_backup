@@ -29,7 +29,7 @@ use AKlump\WebsiteBackup\Command\HealthcheckCommand;
 use AKlump\WebsiteBackup\Command\UnpackCommand;
 
 $application = new Application('Website Backup');
-$application->setVersion('0.1.2');
+$application->setVersion('0.0.28');
 
 $application->getDefinition()->addOptions([
   new InputOption('--config', NULL, InputOption::VALUE_REQUIRED, 'Path to the configuration file.'),

@@ -76,13 +76,25 @@ class BackupServiceTest extends TestCase {
 
   public function testRunLocalBackupSuccess() {
     $config = [
-      'path_to_app' => $this->test_app_root,
-      'manifest' => ['file.txt'],
+      'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
     ];
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);
+
+    // Provide __config_path manually since ConfigLoader isn't used here
+    $reflection = new \ReflectionClass($service);
+    $prop = $reflection->getProperty('config');
+    $prop->setAccessible(true);
+    // Use realpath for both to ensure consistency on macOS (/var vs /private/var)
+    $config['__config_path'] = realpath($this->test_app_root) . '/bin/config/website_backup.yml';
+
+    // ConfigLoader replaces tokens, so we simulate that too
+    // On macOS, realpath might be needed because /var is a symlink to /private/var
+    $manifest_path = realpath($this->test_app_root . '/file.txt');
+    $config['manifest'] = [$manifest_path];
+    $prop->setValue($service, $config);
 
     $service->run(BackupOptions::FILES, $this->test_local_dir);
 
@@ -94,13 +106,20 @@ class BackupServiceTest extends TestCase {
 
   public function testRunLocalBackupGzipSuccess() {
     $config = [
-      'path_to_app' => $this->test_app_root,
-      'manifest' => ['file.txt'],
+      'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
     ];
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);
+
+    // Provide __config_path manually
+    $reflection = new \ReflectionClass($service);
+    $prop = $reflection->getProperty('config');
+    $prop->setAccessible(true);
+    $config['__config_path'] = realpath($this->test_app_root) . '/bin/config/website_backup.yml';
+    $config['manifest'] = [realpath($this->test_app_root) . '/file.txt'];
+    $prop->setValue($service, $config);
 
     $service->run(BackupOptions::FILES | BackupOptions::GZIP, $this->test_local_dir);
 
@@ -111,14 +130,21 @@ class BackupServiceTest extends TestCase {
 
   public function testRunLocalBackupEncryptedSuccess() {
     $config = [
-      'path_to_app' => $this->test_app_root,
-      'manifest' => ['file.txt'],
+      'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
       'encryption' => ['password' => 'secret'],
     ];
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);
+
+    // Provide __config_path manually
+    $reflection = new \ReflectionClass($service);
+    $prop = $reflection->getProperty('config');
+    $prop->setAccessible(true);
+    $config['__config_path'] = realpath($this->test_app_root) . '/bin/config/website_backup.yml';
+    $config['manifest'] = [realpath($this->test_app_root) . '/file.txt'];
+    $prop->setValue($service, $config);
 
     $service->run(BackupOptions::FILES | BackupOptions::GZIP | BackupOptions::ENCRYPT, $this->test_local_dir);
 
@@ -129,8 +155,7 @@ class BackupServiceTest extends TestCase {
 
   public function testRunS3BackupSuccess() {
     $config = [
-      'path_to_app' => $this->test_app_root,
-      'manifest' => ['file.txt'],
+      'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
       'aws_region' => 'us-west-1',
@@ -147,6 +172,14 @@ class BackupServiceTest extends TestCase {
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);
 
+    // Provide __config_path manually
+    $reflection = new \ReflectionClass($service);
+    $prop = $reflection->getProperty('config');
+    $prop->setAccessible(true);
+    $config['__config_path'] = realpath($this->test_app_root) . '/bin/config/website_backup.yml';
+    $config['manifest'] = [realpath($this->test_app_root) . '/file.txt'];
+    $prop->setValue($service, $config);
+
     // Mock S3Service
     $mockS3 = $this->createMock(S3Service::class);
     $mockS3->expects($this->once())->method('upload');
@@ -162,8 +195,7 @@ class BackupServiceTest extends TestCase {
 
   public function testRunNotifyFailure() {
     $config = [
-      'path_to_app' => $this->test_app_root,
-      'manifest' => ['file.txt'],
+      'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
       'notifications' => [
@@ -177,6 +209,14 @@ class BackupServiceTest extends TestCase {
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);
 
+    // Provide __config_path manually
+    $reflection = new \ReflectionClass($service);
+    $prop = $reflection->getProperty('config');
+    $prop->setAccessible(true);
+    $config['__config_path'] = $this->test_app_root . '/bin/config/website_backup.yml';
+    $config['manifest'] = [realpath($this->test_app_root) . '/file.txt'];
+    $prop->setValue($service, $config);
+
     // Mock ProcessRunner to fail when rsync is called (or cp)
     $mockRunner = $this->createMock(ProcessRunner::class);
     $mockProcess = $this->createMock(Process::class);
@@ -184,8 +224,7 @@ class BackupServiceTest extends TestCase {
     $mockProcess->method('getErrorOutput')->willReturn('Some error');
     $mockRunner->method('run')->willReturn($mockProcess);
     $mockRunner->method('redact')->willReturnArgument(0);
-    
-    $reflection = new \ReflectionClass($service);
+
     $propRunner = $reflection->getProperty('processRunner');
     $propRunner->setAccessible(true);
     $propRunner->setValue($service, $mockRunner);
@@ -242,8 +281,7 @@ class BackupServiceTest extends TestCase {
 
   public function testRunNotifySuccess() {
     $config = [
-      'path_to_app' => $this->test_app_root,
-      'manifest' => ['file.txt'],
+      'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
       'notifications' => [
@@ -257,13 +295,20 @@ class BackupServiceTest extends TestCase {
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);
 
-    // Mock EmailService
+    // Provide __config_path manually
     $reflection = new \ReflectionClass($service);
-    $prop = $reflection->getProperty('emailService');
+    $prop = $reflection->getProperty('config');
     $prop->setAccessible(true);
+    $config['__config_path'] = $this->test_app_root . '/bin/config/website_backup.yml';
+    $config['manifest'] = [realpath($this->test_app_root) . '/file.txt'];
+    $prop->setValue($service, $config);
+
+    // Mock EmailService
+    $propEmail = $reflection->getProperty('emailService');
+    $propEmail->setAccessible(true);
     $mockEmail = $this->createMock(EmailService::class);
     $mockEmail->expects($this->once())->method('send')->willReturn(true);
-    $prop->setValue($service, $mockEmail);
+    $propEmail->setValue($service, $mockEmail);
 
     $service->run(BackupOptions::FILES | BackupOptions::NOTIFY, $this->test_local_dir);
 

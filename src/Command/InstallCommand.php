@@ -41,10 +41,10 @@ class InstallCommand extends Command {
     $get_short_path = new GetShortPath();
     $cwd = getcwd();
     $app_root = dirname(__DIR__, 2);
-    $install_config = $app_root . '/install/config.yml';
+    $install_config_path = $app_root . '/install/config.yml';
 
-    if (!file_exists($install_config)) {
-      $io->error(sprintf('Install configuration file not found at %s', $get_short_path($install_config)));
+    if (!file_exists($install_config_path)) {
+      $io->error(sprintf('Install configuration file not found at %s', $get_short_path($install_config_path)));
 
       return Command::FAILURE;
     }
@@ -75,16 +75,16 @@ class InstallCommand extends Command {
       return Command::FAILURE;
     }
 
-    if (!copy($install_config, $target_config)) {
-      $io->error(sprintf('Failed to copy %s to %s', $get_short_path($install_config), $get_short_path($target_config)));
+    if (!copy($install_config_path, $target_config)) {
+      $io->error(sprintf('Failed to copy %s to %s', $get_short_path($install_config_path), $get_short_path($target_config)));
 
       return Command::FAILURE;
     }
 
-    $io->success(sprintf('Copied %s to %s', $get_short_path($install_config), $get_short_path($target_config)));
+    $io->success(sprintf('Copied %s to %s', $get_short_path($install_config_path), $get_short_path($target_config)));
 
     // Scan for environment tokens
-    $content = file_get_contents($install_config);
+    $content = file_get_contents($install_config_path);
     preg_match_all(ConfigLoader::ENV_TOKEN_PATTERN, $content, $matches);
     $tokens = array_unique($matches[1]);
 
@@ -103,6 +103,9 @@ class InstallCommand extends Command {
 
       $to_append = "";
       foreach ($tokens as $token) {
+        if ($token === 'PROJECT_ROOT') {
+          continue;
+        }
         if (!in_array($token, $existing_env)) {
           $to_append .= sprintf("%s=\n", $token);
         }

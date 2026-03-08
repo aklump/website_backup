@@ -100,6 +100,32 @@ The configuration is resolved using the following order of precedence (highest t
 
 Environment variables **cannot** be used by the application unless the YAML file explicitly references them using the `${TOKEN}` syntax. This ensures the YAML file remains the single source of truth for the application's configuration structure.
 
+## Path Resolution
+
+The application uses a consistent rule for resolving filesystem paths defined in the YAML configuration:
+
+1.  **Relative Paths:** Any relative path is resolved relative to the directory containing the configuration file (`website_backup.yml`).
+2.  **Absolute Paths:** Absolute paths remain unchanged.
+3.  **`${PROJECT_ROOT}` Token:** A reserved `${PROJECT_ROOT}` token is available to anchor paths to the project's root directory, regardless of where the configuration file is located.
+
+### Examples
+
+**Config-Relative Path:**
+If `website_backup.yml` is in `bin/config/`, then `../../private/backups` resolves to `private/backups` relative to the project root.
+
+```yaml
+directories:
+  local: ../../private/backups
+```
+
+**`${PROJECT_ROOT}`-Anchored Path:**
+Useful for manifest entries that should always point to the same application structure.
+
+```yaml
+manifest:
+  - ${PROJECT_ROOT}/web/sites/*/files/
+```
+
 ## Notifications
 
 The application supports optional email notifications for backup runs.

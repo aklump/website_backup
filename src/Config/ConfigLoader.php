@@ -42,7 +42,7 @@ class ConfigLoader {
   }
 
   public function load(): array {
-    $config = ['path_to_app' => $this->appRoot];
+    $config = [];
 
     // 1. Load from .env if it exists
     $env_path = $this->getEnvPath();
@@ -58,6 +58,9 @@ class ConfigLoader {
 
     // 2. Load from YAML config
     $config_path = $this->getConfigPath();
+    $config_dir = dirname($config_path);
+    $config = ['__config_path' => $config_path];
+
     if (file_exists($config_path)) {
       if (!is_readable($config_path)) {
         throw new \RuntimeException(sprintf('Configuration file is not readable: %s', $config_path));
@@ -66,6 +69,9 @@ class ConfigLoader {
       // Replace ${TOKEN} with env var values
       $content = preg_replace_callback(static::ENV_TOKEN_PATTERN, function ($matches) {
         $env_var = $matches[1];
+        if ($env_var === 'PROJECT_ROOT') {
+          return $this->appRoot;
+        }
 
         return $_ENV[$env_var] ?? $_SERVER[$env_var] ?? getenv($env_var) ?: '';
       }, $content);
@@ -79,10 +85,42 @@ class ConfigLoader {
       throw new \RuntimeException(sprintf('Configuration file not found: %s', $this->configPath));
     }
 
-    // 3. Apply special overrides (like DATABASE_URL)
+    // 3. Normalize paths relative to the configuration file directory
+    $config = $this->normalizePaths($config, $config_dir);
+
+    // 4. Apply special overrides (like DATABASE_URL)
     $config = $this->applySpecialOverrides($config);
 
     return $config;
+  }
+
+  private function normalizePaths(array $config, string $config_dir): array {
+    // Normalize directories.local
+    if (!empty($config['directories']['local'])) {
+      $config['directories']['local'] = $this->resolvePath($config['directories']['local'], $config_dir);
+    }
+
+    // Manifest paths are normalized by ManifestService or here?
+    // The requirement says: "after YAML parsing, normalize path-based config values relative to the config directory"
+    // "ensure this normalization is centralized so commands do not each implement their own path logic"
+    if (!empty($config['manifest']) && is_array($config['manifest'])) {
+      foreach ($config['manifest'] as &$item) {
+        $is_exclude = str_starts_with($item, '!');
+        $path = $is_exclude ? substr($item, 1) : $item;
+        $resolved = $this->resolvePath($path, $config_dir);
+        $item = ($is_exclude ? '!' : '') . $resolved;
+      }
+    }
+
+    return $config;
+  }
+
+  private function resolvePath(string $path, string $base_dir): string {
+    if (str_starts_with($path, '/')) {
+      return $path;
+    }
+
+    return realpath($base_dir . '/' . $path) ?: ($base_dir . '/' . $path);
   }
 
   private function applySpecialOverrides(array $config): array {
@@ -115,7 +153,7 @@ class ConfigLoader {
   public function validate(array $config, bool $is_local = FALSE, bool $notify = FALSE, bool $encrypt = FALSE): void {
     $config_path = $this->getConfigPath();
     $get_short_path = new GetShortPath();
-    $required = ['path_to_app', 'manifest', 'database'];
+    $required = ['manifest'];
     if (!$is_local) {
       $required = array_merge($required, [
         'aws_region',
@@ -189,10 +227,6 @@ class ConfigLoader {
       if (empty($config['encryption']['password']) || !is_string($config['encryption']['password'])) {
         throw new \RuntimeException(sprintf('Missing required configuration in %s: encryption.password', $get_short_path($config_path)));
       }
-    }
-
-    if (!is_dir($config['path_to_app'])) {
-      throw new \RuntimeException(sprintf('path_to_app is not a directory: %s', $config['path_to_app']));
     }
   }
 }

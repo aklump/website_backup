@@ -249,7 +249,7 @@ YAML;
 
   public function testExecuteFailsWithInvalidManifest() {
     $config = <<<YAML
-manifest: [non_existent_file.txt]
+manifest: [\${PROJECT_ROOT}/non_existent_file.txt]
 database: { handler: null }
 YAML;
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
@@ -264,13 +264,15 @@ YAML;
     $this->assertEquals(1, $exit_code);
     $output = $command_tester->getDisplay();
     $this->assertStringContainsString('Checking Manifest', $output);
-    $this->assertStringContainsString('? non_existent_file.txt — No files found matching this pattern.', $output);
+    // Realpath on macOS might return /private/var...
+    $expected_path = realpath($this->test_dir) . '/non_existent_file.txt';
+    $this->assertStringContainsString('? ' . $expected_path . ' — No files found matching this pattern.', $output);
   }
 
   public function testExecuteSucceedsWithValidManifest() {
     touch($this->test_dir . '/valid_file.txt');
     $config = <<<YAML
-manifest: [valid_file.txt]
+manifest: [\${PROJECT_ROOT}/valid_file.txt]
 aws_region: us-west-1
 aws_bucket: example
 aws_access_key_id: key
@@ -280,7 +282,9 @@ aws_retention:
   keep_latest_daily_for_days: 1
   keep_latest_monthly_for_months: 1
   keep_latest_yearly_for_years: 1
-database: { handler: null }
+database: 
+  url: mysql://user:pass@host/db
+  handler: null
 YAML;
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
@@ -295,6 +299,7 @@ YAML;
     // Manifest should pass even if database or S3 fail (though we expect them to fail in test)
     // We just want to check that it reports a pass for the manifest section.
     $this->assertStringContainsString('Checking Manifest', $output);
-    $this->assertStringContainsString('✓ valid_file.txt', $output);
+    $expected_path = realpath($this->test_dir) . '/valid_file.txt';
+    $this->assertStringContainsString('✓ ' . $expected_path, $output);
   }
 }

@@ -23,15 +23,16 @@ aws_retention:
 object_name: example
 
 # List of file/folder paths to include in the backup, preceed a path with ! to
-# indicate the path should be excluded.  These may be absolute or relative to the
-# app root.  If you are using a database handler, the dumpfile will be added to
-# the manifest automatically for you.
+# indicate the path should be excluded.  Relative paths are relative to this
+# configuration file.  You may use ${PROJECT_ROOT} to anchor a path to the
+# project root.  If you are using a database handler, the dumpfile will be
+# added to the manifest automatically for you.
 manifest:
-  - web/sites/*/files/
-  - "!web/sites/*/files/styles/"
-  - private/*/files/
-  - "!private/*/files/tmp/"
-  - web/sites/*/README.*
+  - ${PROJECT_ROOT}/web/sites/*/files/
+  - "!${PROJECT_ROOT}/web/sites/*/files/styles/"
+  - ${PROJECT_ROOT}/private/*/files/
+  - "!${PROJECT_ROOT}/private/*/files/tmp/"
+  - ${PROJECT_ROOT}/web/sites/*/README.*
 
 database:
   # The database connection URL to use when creating the database dump.
