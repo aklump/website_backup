@@ -19,6 +19,8 @@ class HealthcheckCommand extends Command {
   protected function configure(): void {
     $this
       ->setDescription('Performs a health check of the application and configuration.')
+      ->addOption('config', NULL, \Symfony\Component\Console\Input\InputOption::VALUE_REQUIRED, 'Path to the configuration file.')
+      ->addOption('env-file', NULL, \Symfony\Component\Console\Input\InputOption::VALUE_REQUIRED, 'Path to the environment file.')
       ->setAliases(['hc']);
   }
 
@@ -27,12 +29,14 @@ class HealthcheckCommand extends Command {
     $io->title('Website Backup Health Check');
 
     $root = (new GetInstalledInRoot())();
-    if (!$root) {
+    if (!$root && !$input->getOption('config')) {
       $io->error('Could not find the application root; did you run install yet? Make sure bin/config/website_backup.yml exists.');
       return Command::FAILURE;
     }
 
-    $loader = new ConfigLoader($root);
+    $config_path = $input->getOption('config');
+    $env_path = $input->getOption('env-file');
+    $loader = new ConfigLoader($root, $config_path, $env_path);
     $all_passed = true;
 
     // 1. Configuration Check
@@ -75,7 +79,7 @@ class HealthcheckCommand extends Command {
     }
 
     // 3. Database Connectivity Check
-    if (!empty($config['database'])) {
+    if (!empty($config['database']['url'])) {
       $output->writeln('');
       $output->writeln('<comment>Checking Database Connectivity</comment>');
       $output->writeln('<comment>------------------------------</comment>');
@@ -84,7 +88,7 @@ class HealthcheckCommand extends Command {
         $output->writeln(' <info>✓</info> Successfully connected to the database.');
       } catch (\Exception $e) {
         $output->writeln(' <error>✗</error> Database connectivity failed: ' . $e->getMessage());
-        $output->writeln('   <comment>Note: Make sure your database credentials and host are correct and that "mysql" client is installed.</comment>');
+        $output->writeln('   <comment>Note: Make sure your database URL is correct and that "mysql" client is installed.</comment>');
         $all_passed = false;
       }
     }

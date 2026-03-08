@@ -17,6 +17,20 @@ bin/config/website_backup.yml
 
 This file is required and contains the core settings for the backup, such as the `manifest` (files to include/exclude), `database` connection details, and AWS settings.
 
+You can override the default configuration file path using the `--config` global option. If the extension is omitted, the application will automatically try `.yml` and `.yaml`.
+
+```bash
+# These are equivalent if custom_config.yml exists
+php bin/website_backup backup:s3 --config=/path/to/custom_config.yml
+php bin/website_backup backup:s3 --config=/path/to/custom_config
+```
+
+Additionally, dot-separated names like `website_backup.local` are supported and will resolve to `website_backup.local.yml` if the file exists.
+
+```bash
+php bin/website_backup backup:s3 --config=website_backup.local
+```
+
 ## Retention Policy
 
 The application uses a flexible retention policy to manage backups on S3. Backups are pruned based on daily and monthly buckets.
@@ -39,6 +53,12 @@ aws_retention:
 ## Environment Variables and `.env`
 
 The application supports loading environment variables from a `.env` file located at the application root.
+
+You can override the default environment file path using the `--env-file` global option:
+
+```bash
+php bin/website_backup backup:s3 --env-file=/path/to/custom.env
+```
 
 You can use the `install` command to automatically generate a `.env` file with the necessary keys based on your configuration:
 
@@ -69,11 +89,11 @@ WEBSITE_BACKUP_AWS_ACCESS_KEY_ID=your_access_key
 The configuration is resolved using the following order of precedence (highest to lowest):
 
 1.  **YAML File (with Token Resolution):** Values defined directly in `website_backup.yml` take absolute precedence. If a `${TOKEN}` is used, it is resolved from the environment, but the resulting value is still considered part of the YAML configuration.
-2.  **`DATABASE_URL` Environment Variable:** If certain database configuration keys (name, user, password, host, port) are missing from the YAML file, they will be automatically filled using the `DATABASE_URL` environment variable if it is present.
+2.  **`DATABASE_URL` Environment Variable:** Environment variables are only used when referenced explicitly in YAML. To use your application's existing `DATABASE_URL`, reference it explicitly in YAML as `database.url: ${DATABASE_URL}`.
 
 ### Key Precedence Note
 
-Environment variables **cannot** override values explicitly defined in the YAML file unless the YAML file uses the `${TOKEN}` syntax for that specific setting. This ensures the YAML file remains the single source of truth for the application's configuration structure.
+Environment variables **cannot** be used by the application unless the YAML file explicitly references them using the `${TOKEN}` syntax. This ensures the YAML file remains the single source of truth for the application's configuration structure.
 
 ## Notifications
 
@@ -195,8 +215,19 @@ The command will create a directory next to the source file with the unpacked co
 
 ## Database URL Support
 
-The application specifically supports the `DATABASE_URL` environment variable for database connectivity.
+The application uses a single connection URL for database connectivity.
 
-Format: `mysql://user:password@host:port/dbname`
+**Configuration in `bin/config/website_backup.yml`:**
 
-If `DATABASE_URL` is provided, the application will extract the connection details and use them for any database settings that are **not** explicitly defined in the `website_backup.yml` file.
+```yaml
+database:
+  url: ${DATABASE_URL}
+```
+
+**Format:** `mysql://user:password@host:port/dbname`
+
+To use your application's existing `DATABASE_URL` environment variable, you must reference it explicitly in the YAML file as shown above. Environment variables are not automatically used unless they are referenced with the `${TOKEN}` syntax.
+
+Special characters in the password (e.g., `@`, `:`, `/`) must be URL-encoded. For example, a password of `p@ssword` should be written as `p%40ssword`.
+
+The URL must include the database name (as the path), user, and host. The port is optional and defaults to the standard MySQL port (3306) if omitted by the underlying tools. Password can be omitted if not required.

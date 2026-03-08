@@ -12,26 +12,56 @@ class ConfigLoader {
 
   private $appRoot;
 
-  public function __construct(string $app_root) {
+  private ?string $configPath = NULL;
+
+  private ?string $envPath = NULL;
+
+  public function __construct(string $app_root, string $config_path = NULL, string $env_path = NULL) {
     $this->appRoot = $app_root;
+    $this->configPath = $config_path;
+    $this->envPath = $env_path;
   }
 
   private function getConfigPath(): string {
-    return $this->appRoot . '/bin/config/website_backup.yml';
+    $path = $this->configPath ?? ($this->appRoot . '/bin/config/website_backup.yml');
+    if (file_exists($path)) {
+      return $path;
+    }
+
+    foreach (['.yml', '.yaml'] as $ext) {
+      if (file_exists($path . $ext)) {
+        return $path . $ext;
+      }
+    }
+
+    return $path;
+  }
+
+  private function getEnvPath(): string {
+    return $this->envPath ?? ($this->appRoot . '/.env');
   }
 
   public function load(): array {
     $config = ['path_to_app' => $this->appRoot];
 
     // 1. Load from .env if it exists
-    $dotenv_path = $this->appRoot . '/.env';
-    if (file_exists($dotenv_path)) {
-      (new Dotenv())->load($dotenv_path);
+    $env_path = $this->getEnvPath();
+    if (file_exists($env_path)) {
+      if (!is_readable($env_path)) {
+        throw new \RuntimeException(sprintf('Environment file is not readable: %s', $env_path));
+      }
+      (new Dotenv())->load($env_path);
+    }
+    elseif ($this->envPath !== NULL) {
+      throw new \RuntimeException(sprintf('Environment file not found: %s', $this->envPath));
     }
 
-    // 2. Load from YAML config in bin/config/website_backup.yml
+    // 2. Load from YAML config
     $config_path = $this->getConfigPath();
     if (file_exists($config_path)) {
+      if (!is_readable($config_path)) {
+        throw new \RuntimeException(sprintf('Configuration file is not readable: %s', $config_path));
+      }
       $content = file_get_contents($config_path);
       // Replace ${TOKEN} with env var values
       $content = preg_replace_callback(static::ENV_TOKEN_PATTERN, function ($matches) {
@@ -45,6 +75,9 @@ class ConfigLoader {
         $config = array_replace_recursive($config, $yaml);
       }
     }
+    elseif ($this->configPath !== NULL) {
+      throw new \RuntimeException(sprintf('Configuration file not found: %s', $this->configPath));
+    }
 
     // 3. Apply special overrides (like DATABASE_URL)
     $config = $this->applySpecialOverrides($config);
@@ -53,26 +86,27 @@ class ConfigLoader {
   }
 
   private function applySpecialOverrides(array $config): array {
-    $db_url = $_ENV['DATABASE_URL'] ?? $_SERVER['DATABASE_URL'] ?? getenv('DATABASE_URL');
-    if ($db_url) {
-      $parsed = parse_url($db_url);
-      if ($parsed) {
-        if (empty($config['database']['name'])) {
-          $config['database']['name'] = ltrim($parsed['path'] ?? '', '/');
-        }
-        if (empty($config['database']['user'])) {
-          $config['database']['user'] = $parsed['user'] ?? '';
-        }
-        if (empty($config['database']['password'])) {
-          $config['database']['password'] = $parsed['pass'] ?? '';
-        }
-        if (empty($config['database']['host'])) {
-          $config['database']['host'] = $parsed['host'] ?? '';
-        }
-        if (empty($config['database']['port'])) {
-          $config['database']['port'] = (string) ($parsed['port'] ?? '');
-        }
-      }
+    $db_url = $config['database']['url'] ?? NULL;
+    if (!$db_url) {
+      return $config;
+    }
+
+    $parsed = parse_url($db_url);
+    if (!$parsed || empty($parsed['scheme']) || empty($parsed['host'])) {
+      throw new \RuntimeException(sprintf('Invalid database URL: %s', $db_url));
+    }
+
+    $config['database']['name'] = ltrim($parsed['path'] ?? '', '/');
+    $config['database']['user'] = $parsed['user'] ?? '';
+    $config['database']['password'] = $parsed['pass'] ?? '';
+    $config['database']['host'] = $parsed['host'] ?? '';
+    $config['database']['port'] = (string) ($parsed['port'] ?? '');
+
+    if (empty($config['database']['name'])) {
+      throw new \RuntimeException(sprintf('Database name is missing in URL: %s', $db_url));
+    }
+    if (empty($config['database']['user'])) {
+      throw new \RuntimeException(sprintf('Database user is missing in URL: %s', $db_url));
     }
 
     return $config;
@@ -96,6 +130,10 @@ class ConfigLoader {
       if (empty($config[$key])) {
         throw new \RuntimeException(sprintf('Missing required configuration in %s: %s', $get_short_path($config_path), $key));
       }
+    }
+
+    if (empty($config['database']['url'])) {
+      throw new \RuntimeException(sprintf('Missing required configuration in %s: database.url', $get_short_path($config_path)));
     }
 
     if ($notify) {

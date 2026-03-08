@@ -28,14 +28,25 @@ manifest:
   - web/sites/*/README.*
 
 database:
-  # Optional if ${DATABASE_URL} is being used
-  name: database
-  # Optional if ${DATABASE_URL} is being used
-  user: database_user
-  # Optional if ${DATABASE_URL} is being used
-  password: ${WEBSITE_BACKUP_DATABASE_PASSWORD}
+  # The database connection URL to use when creating the database dump.
+  #
+  # This should be a standard connection string, for example:
+  # mysql://user:password@host:3306/dbname
+  #
+  # In most cases, if your application already provides a DATABASE_URL
+  # environment variable, you should reference it here as ${DATABASE_URL}.
+  # Note that environment variables are only used when explicitly referenced in
+  # this configuration file.
+  url: ${DATABASE_URL}
+  #
+  # If your backup process needs to connect differently than the application
+  # itself, you may define a separate environment variable instead, for example:
+  # url: ${WEBSITE_BACKUP_DATABASE_URL}
+  #
+  # Note: if the password contains special characters such as @, :, /, ?, or #,
+  # it should be URL-encoded.
 
-  # Define which database export handler to use; one of: loft_deploy, mysqldump.
+  # Define which database export handler to use; one of: mysqldump.
   handler: mysqldump
   dumpfile: backup
 
@@ -55,7 +66,7 @@ encryption:
   s3: true
 
 directories:
-  local: /private/backups
+  local: ../../private/backups
 
 notifications:
   email:

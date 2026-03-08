@@ -63,63 +63,60 @@ class ConfigLoaderTest extends TestCase {
     putenv('WEBSITE_BACKUP_AWS_REGION'); // Clear env
   }
 
-  public function testDatabaseUrlOverride() {
-    putenv('DATABASE_URL=mysql://drupal11:drupal11@database:3306/drupal11');
+  public function testUnsubstitutedDatabaseUrlThrowsException() {
+    $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
+    // Provide other required fields to ensure it reaches database.url validation
+    file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1\ndatabase:\n  url: \${DATABASE_URL}");
 
     $loader = new ConfigLoader($this->test_app_root);
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('database.url');
     $config = $loader->load();
-
-    $this->assertEquals('drupal11', $config['database']['name']);
-    $this->assertEquals('drupal11', $config['database']['user']);
-    $this->assertEquals('drupal11', $config['database']['password']);
-    $this->assertEquals('database', $config['database']['host']);
-    $this->assertEquals('3306', $config['database']['port']);
-
-    putenv('DATABASE_URL'); // Clear env
+    $loader->validate($config);
   }
 
-  public function testDatabaseUrlOverrideWithIndividualOverrides() {
+  public function testDatabaseUrlInYaml() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
-    file_put_contents($config_path, "database:\n  user: \${WEBSITE_BACKUP_DB_USER}");
+    file_put_contents($config_path, "database:\n  url: \${DATABASE_URL}");
 
     putenv('DATABASE_URL=mysql://user:pass@host:3306/dbname');
-    putenv('WEBSITE_BACKUP_DB_USER=override_user');
 
     $loader = new ConfigLoader($this->test_app_root);
     $config = $loader->load();
 
-    // Individual environment variables should take precedence over DATABASE_URL
-    // because they are more specific.
-    $this->assertEquals('override_user', $config['database']['user']);
     $this->assertEquals('dbname', $config['database']['name']);
+    $this->assertEquals('user', $config['database']['user']);
+    $this->assertEquals('pass', $config['database']['password']);
+    $this->assertEquals('host', $config['database']['host']);
+    $this->assertEquals('3306', $config['database']['port']);
 
     putenv('DATABASE_URL');
-    putenv('WEBSITE_BACKUP_DB_USER');
   }
 
-  public function testEnvOverridesRespectExistingYaml() {
+  public function testMissingDatabaseUrlThrowsException() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
-    file_put_contents($config_path, "aws_region: us-east-1\ndatabase:\n  user: yaml_user\n  name: \${DATABASE_NAME_VAR}");
-
-    putenv('WEBSITE_BACKUP_AWS_REGION=us-west-2');
-    putenv('WEBSITE_BACKUP_DB_USER=env_user');
-    putenv('DATABASE_URL=mysql://dburl_user:pass@host:3306/dbname');
-    putenv('DATABASE_NAME_VAR=dbname');
+    file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1\ndatabase: { handler: null }");
 
     $loader = new ConfigLoader($this->test_app_root);
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('database.url');
     $config = $loader->load();
+    $loader->validate($config);
+  }
 
-    // YAML should take precedence (no token, fixed value)
-    $this->assertEquals('us-east-1', $config['aws_region']);
-    $this->assertEquals('yaml_user', $config['database']['user']);
+  public function testDatabaseUrlMissingPartsThrowsException() {
+    $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
+    file_put_contents($config_path, "database:\n  url: \${DATABASE_URL}");
 
-    // This should be loaded from env because it's a token in YAML
-    $this->assertEquals('dbname', $config['database']['name']);
-
-    putenv('WEBSITE_BACKUP_AWS_REGION');
-    putenv('WEBSITE_BACKUP_DB_USER');
-    putenv('DATABASE_URL');
-    putenv('DATABASE_NAME_VAR');
+    putenv('DATABASE_URL=mysql://user:pass@host');
+    $loader = new ConfigLoader($this->test_app_root);
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Database name is missing in URL');
+    try {
+      $loader->load();
+    } finally {
+      putenv('DATABASE_URL');
+    }
   }
 
   public function testValidateFailsWhenMissingRequired() {
@@ -127,7 +124,10 @@ class ConfigLoaderTest extends TestCase {
     $config = [
       'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
-      'database' => ['handler' => NULL],
+      'database' => [
+        'url' => 'mysql://user:pass@host/db',
+        'handler' => NULL,
+      ],
       'aws_region' => 'us-east-1',
       'aws_bucket' => 'bucket',
       'aws_access_key_id' => 'key',
@@ -154,7 +154,10 @@ class ConfigLoaderTest extends TestCase {
     $base_config = [
       'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
-      'database' => ['handler' => NULL],
+      'database' => [
+        'url' => 'mysql://user:pass@host/db',
+        'handler' => NULL,
+      ],
       'aws_region' => 'us-east-1',
       'aws_bucket' => 'bucket',
       'aws_access_key_id' => 'key',
@@ -218,7 +221,10 @@ class ConfigLoaderTest extends TestCase {
     $base_config = [
       'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
-      'database' => ['handler' => NULL],
+      'database' => [
+        'url' => 'mysql://user:pass@host/db',
+        'handler' => NULL,
+      ],
       'aws_region' => 'us-east-1',
       'aws_bucket' => 'bucket',
       'aws_access_key_id' => 'key',
@@ -261,7 +267,10 @@ class ConfigLoaderTest extends TestCase {
     $base_config = [
       'path_to_app' => $this->test_app_root . '/app_path',
       'manifest' => ['foo'],
-      'database' => ['handler' => NULL],
+      'database' => [
+        'url' => 'mysql://user:pass@host/db',
+        'handler' => NULL,
+      ],
       'aws_region' => 'us-east-1',
       'aws_bucket' => 'bucket',
       'aws_access_key_id' => 'key',
@@ -340,7 +349,7 @@ class ConfigLoaderTest extends TestCase {
   public function testUnreplacedTokensAreTreatedAsEmpty() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
     // aws_access_key_id is required for non-local backup
-    file_put_contents($config_path, "aws_access_key_id: \${MISSING_TOKEN}\naws_region: us-east-1\naws_bucket: bucket\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1\nmanifest: [foo]\ndatabase: { handler: null }");
+    file_put_contents($config_path, "aws_access_key_id: \${MISSING_TOKEN}\naws_region: us-east-1\naws_bucket: bucket\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1\nmanifest: [foo]\ndatabase: { url: 'mysql://user:pass@host/db', handler: null }");
 
     $loader = new ConfigLoader($this->test_app_root);
     $config = $loader->load();
@@ -350,5 +359,83 @@ class ConfigLoaderTest extends TestCase {
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('aws_access_key_id');
     $loader->validate($config, FALSE);
+  }
+
+  public function testCustomConfigPath() {
+    $custom_config = $this->test_app_root . '/custom_config.yml';
+    file_put_contents($custom_config, "aws_region: us-north-1\naws_bucket: custom-bucket\npath_to_app: " . $this->test_app_root . '/app_path' . "\ndatabase: { url: 'mysql://user:pass@host/db' }");
+
+    $loader = new ConfigLoader($this->test_app_root, $custom_config);
+    $config = $loader->load();
+
+    $this->assertEquals('us-north-1', $config['aws_region']);
+    $this->assertEquals('custom-bucket', $config['aws_bucket']);
+  }
+
+  public function testCustomEnvPath() {
+    $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
+    file_put_contents($config_path, "aws_region: \${CUSTOM_REGION}\naws_bucket: bucket\npath_to_app: " . $this->test_app_root . '/app_path' . "\ndatabase: { url: 'mysql://user:pass@host/db' }");
+
+    $custom_env = $this->test_app_root . '/custom.env';
+    file_put_contents($custom_env, "CUSTOM_REGION=us-south-1");
+
+    $loader = new ConfigLoader($this->test_app_root, NULL, $custom_env);
+    $config = $loader->load();
+
+    $this->assertEquals('us-south-1', $config['aws_region']);
+  }
+
+  public function testMissingCustomConfigThrowsException() {
+    $loader = new ConfigLoader($this->test_app_root, $this->test_app_root . '/non_existent.yml');
+    // Default fallback shouldn't happen if custom path is provided
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Configuration file not found');
+    $loader->load();
+  }
+
+  public function testMissingCustomEnvThrowsException() {
+    $loader = new ConfigLoader($this->test_app_root, NULL, $this->test_app_root . '/non_existent.env');
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Environment file not found');
+    $loader->load();
+  }
+
+  public function testUnreadableCustomConfigThrowsException() {
+    $custom_config = $this->test_app_root . '/unreadable.yml';
+    file_put_contents($custom_config, "foo: bar");
+    chmod($custom_config, 0000);
+
+    $loader = new ConfigLoader($this->test_app_root, $custom_config);
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('Configuration file is not readable');
+    try {
+      $loader->load();
+    }
+    finally {
+      chmod($custom_config, 0600);
+    }
+  }
+
+  /**
+   * @dataProvider providerTestFlexibleConfigPath
+   */
+  public function testFlexibleConfigPath(string $filename, string $actual_file) {
+    $config_path = $this->test_app_root . '/' . $actual_file;
+    file_put_contents($config_path, "aws_region: flexible-region\naws_bucket: bucket\npath_to_app: " . $this->test_app_root . '/app_path' . "\ndatabase: { url: 'mysql://user:pass@host/db' }");
+
+    $loader = new ConfigLoader($this->test_app_root, $this->test_app_root . '/' . $filename);
+    $config = $loader->load();
+
+    $this->assertEquals('flexible-region', $config['aws_region']);
+  }
+
+  public function providerTestFlexibleConfigPath(): array {
+    return [
+      ['website_backup', 'website_backup.yml'],
+      ['website_backup.yml', 'website_backup.yml'],
+      ['website_backup.yaml', 'website_backup.yaml'],
+      ['website_backup.local', 'website_backup.local.yml'],
+      ['website_backup.local.yml', 'website_backup.local.yml'],
+    ];
   }
 }

@@ -53,7 +53,7 @@ class InstallCommandTest extends TestCase {
     $env_content = file_get_contents($this->test_dir . '/.env');
     $this->assertStringContainsString('WEBSITE_BACKUP_AWS_ACCESS_KEY_ID=', $env_content);
     $this->assertStringContainsString('WEBSITE_BACKUP_AWS_SECRET_ACCESS_KEY=', $env_content);
-    $this->assertStringContainsString('WEBSITE_BACKUP_DATABASE_PASSWORD=', $env_content);
+    $this->assertStringContainsString('DATABASE_URL=', $env_content);
   }
 
   public function testExecuteWithForce() {
@@ -95,5 +95,19 @@ class InstallCommandTest extends TestCase {
 
     $env_content = file_get_contents($this->test_dir . '/.env');
     $this->assertStringContainsString("EXISTING_VAR=foo\nWEBSITE_BACKUP_AWS_ACCESS_KEY_ID=", $env_content);
+  }
+
+  public function testExecuteWithCustomConfigNoExtension() {
+    $application = new Application();
+    $application->add(new InstallCommand());
+
+    $command = $application->find('install');
+    $command_tester = new CommandTester($command);
+    $command_tester->execute([
+      '--force' => TRUE,
+      '--config' => 'custom_config',
+    ]);
+
+    $this->assertFileExists($this->test_dir . '/custom_config.yml');
   }
 }

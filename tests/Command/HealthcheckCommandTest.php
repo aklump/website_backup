@@ -83,10 +83,7 @@ aws_retention:
   keep_daily_for_days: 1
   keep_monthly_for_months: 1
 database:
-  host: localhost
-  user: invalid_user
-  password: invalid_password
-  name: invalid_db
+  url: mysql://invalid_user:invalid_password@localhost/invalid_db
   handler: mysqldump
 YAML;
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
@@ -113,10 +110,7 @@ aws_retention:
   keep_daily_for_days: 1
   keep_monthly_for_months: 1
 database:
-  host: localhost
-  user: root
-  password: ""
-  name: mysql
+  url: mysql://root:@localhost/mysql
   handler: mysqldump
 YAML;
     // Note: For database check to pass, we might need a real MySQL, but here it fails on S3
@@ -147,6 +141,7 @@ aws_retention:
   keep_daily_for_days: 0
   keep_monthly_for_months: 0
 database:
+  url: mysql://user:pass@host/db
   handler: null
 YAML;
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
@@ -167,7 +162,9 @@ YAML;
   public function testExecuteAlwaysChecksSystemTools() {
     $config = <<<YAML
 manifest: [foo]
-database: { handler: null }
+database:
+  url: mysql://user:pass@host/db
+  handler: null
 YAML;
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
@@ -194,7 +191,9 @@ aws_secret_access_key: secret
 aws_retention:
   keep_daily_for_days: 1
   keep_monthly_for_months: 1
-database: { handler: null }
+database:
+  url: mysql://user:pass@host/db
+  handler: null
 encryption:
   s3: true
 YAML;

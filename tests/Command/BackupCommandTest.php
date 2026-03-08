@@ -33,7 +33,7 @@ class BackupCommandTest extends TestCase {
     $this->test_dir = sys_get_temp_dir() . '/website_backup_test_' . bin2hex(random_bytes(8));
     mkdir($this->test_dir, 0700, TRUE);
     mkdir($this->test_dir . '/bin/config', 0777, TRUE);
-    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example");
+    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', "manifest: [foo]\ndatabase:\n  url: mysql://user:pass@host/db\n  handler: null\naws_bucket: example");
     chdir($this->test_dir);
   }
 
@@ -69,7 +69,7 @@ class BackupCommandTest extends TestCase {
   public function testBackupLocalUsesConfigFallbackDir() {
     $local_path = $this->test_dir . '/config_backups';
     mkdir($local_path);
-    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example\ndirectories:\n  local: $local_path";
+    $config = "manifest: [foo]\ndatabase:\n  url: mysql://user:pass@host/db\n  handler: null\naws_bucket: example\ndirectories:\n  local: $local_path";
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
     $application = new Application();
@@ -89,7 +89,7 @@ class BackupCommandTest extends TestCase {
     $cli_path = $this->test_dir . '/cli_backups';
     mkdir($config_path);
     mkdir($cli_path);
-    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example\ndirectories:\n  local: $config_path";
+    $config = "manifest: [foo]\ndatabase:\n  url: mysql://user:pass@host/db\n  handler: null\naws_bucket: example\ndirectories:\n  local: $config_path";
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
     $application = new Application();
@@ -233,7 +233,7 @@ class BackupCommandTest extends TestCase {
   }
 
   public function testBackupLocalWithNotifyShowsSentMessage() {
-    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example\nnotifications:\n  email:\n    to: [ops@example.com]\n    on_success: { subject: Success }\n    on_fail: { subject: Fail }";
+    $config = "manifest: [foo]\ndatabase:\n  url: mysql://user:pass@host/db\n  handler: null\naws_bucket: example\nnotifications:\n  email:\n    to: [ops@example.com]\n    on_success: { subject: Success }\n    on_fail: { subject: Fail }";
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
     $application = new Application();

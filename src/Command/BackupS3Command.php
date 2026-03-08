@@ -19,6 +19,8 @@ class BackupS3Command extends Command {
   protected function configure(): void {
     $this
       ->setDescription('Backs up the website to S3.')
+      ->addOption('config', NULL, InputOption::VALUE_REQUIRED, 'Path to the configuration file.')
+      ->addOption('env-file', NULL, InputOption::VALUE_REQUIRED, 'Path to the environment file.')
       ->addOption('database', NULL, InputOption::VALUE_NONE, 'Backup only the database.')
       ->addOption('files', NULL, InputOption::VALUE_NONE, 'Backup only the files.')
       ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force the backup without confirmation.')
@@ -28,7 +30,9 @@ class BackupS3Command extends Command {
   protected function execute(InputInterface $input, OutputInterface $output): int {
     $io = new SymfonyStyle($input, $output);
     $root = (new GetInstalledInRoot())();
-    $loader = new ConfigLoader($root);
+    $config_path = $input->getOption('config');
+    $env_path = $input->getOption('env-file');
+    $loader = new ConfigLoader($root, $config_path, $env_path);
     $config = $loader->load();
 
     if ($input->getOption('database') && $input->getOption('files')) {

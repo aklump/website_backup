@@ -21,6 +21,7 @@ else {
 require_once $_composer_autoload_path;
 
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputOption;
 use AKlump\WebsiteBackup\Command\BackupLocalCommand;
 use AKlump\WebsiteBackup\Command\BackupS3Command;
 use AKlump\WebsiteBackup\Command\InstallCommand;
@@ -29,6 +30,11 @@ use AKlump\WebsiteBackup\Command\UnpackCommand;
 
 $application = new Application('Website Backup');
 $application->setVersion('0.1.1');
+
+$application->getDefinition()->addOptions([
+  new InputOption('--config', NULL, InputOption::VALUE_REQUIRED, 'Path to the configuration file.'),
+  new InputOption('--env-file', NULL, InputOption::VALUE_REQUIRED, 'Path to the environment file.'),
+]);
 
 // Config and services setup will happen here later.
 
