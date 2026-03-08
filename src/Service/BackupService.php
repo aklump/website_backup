@@ -62,6 +62,7 @@ class BackupService {
         throw new \RuntimeException(sprintf('Could not create the local object directory: %s', $staging_dir));
       }
       $this->output->writeln(sprintf('Staging in: %s', ($this->getShortPath)($staging_dir)), OutputInterface::VERBOSITY_DEBUG);
+      $this->databaseDumper->temp_dir = $temp_work_dir;
 
     // 1. Database export
     if (!empty($this->config['database']['handler']) && ($only_db || !$only_files)) {
@@ -141,7 +142,7 @@ class BackupService {
           );
 
           if (!$process->isSuccessful()) {
-            throw new \RuntimeException('Could not encrypt object: ' . $process->getErrorOutput());
+            throw new \RuntimeException('Could not encrypt object: ' . $this->processRunner->redact($process->getErrorOutput()));
           }
           $elapsed = round(microtime(TRUE) - $start, 2);
           $this->output->writeln(sprintf(' <info>*</info> %s seconds', $elapsed));
@@ -240,7 +241,7 @@ class BackupService {
         );
 
         if (!$process->isSuccessful()) {
-          throw new \RuntimeException('Could not encrypt object: ' . $process->getErrorOutput());
+          throw new \RuntimeException('Could not encrypt object: ' . $this->processRunner->redact($process->getErrorOutput()));
         }
         $elapsed = round(microtime(TRUE) - $start, 2);
         $this->output->writeln(sprintf(' <info>*</info> %s seconds', $elapsed));

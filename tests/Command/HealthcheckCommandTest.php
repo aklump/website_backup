@@ -169,8 +169,8 @@ YAML;
 
     $output = $command_tester->getDisplay();
     $this->assertStringContainsString('Checking System Tools', $output);
-    $this->assertStringContainsString('Tar is installed', $output);
-    $this->assertStringContainsString('Openssl is installed', $output);
+    $this->assertStringContainsString('✓ tar', $output);
+    $this->assertStringContainsString('✓ openssl', $output);
   }
 
   public function testExecuteFailsIfS3EncryptionEnabledAndPasswordMissing() {

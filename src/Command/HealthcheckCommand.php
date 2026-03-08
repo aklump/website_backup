@@ -35,56 +35,64 @@ class HealthcheckCommand extends Command {
     $all_passed = true;
 
     // 1. Configuration Check
-    $io->section('Checking Configuration');
+    $output->writeln('<comment>Checking Configuration</comment>');
+    $output->writeln('----------------------');
     try {
       $config = $loader->load();
       $loader->validate($config);
-      $io->success('Configuration is present and valid.');
+      $output->writeln(' <info>✓</info> Configuration is present and valid.');
 
       // Check for zero retention
       $retention = $config['aws_retention'] ?? [];
       if (isset($retention['keep_daily_for_days']) && isset($retention['keep_monthly_for_months'])) {
         if ($retention['keep_daily_for_days'] === 0 && $retention['keep_monthly_for_months'] === 0) {
-          $io->warning('Retention is set to 0 for both daily and monthly. This will cause the S3 bucket to continue to grow in size as no backups will ever be pruned.');
+          $output->writeln(' <comment>!</comment> Retention is set to 0 for both daily and monthly. This will cause the S3 bucket to continue to grow in size as no backups will ever be pruned.');
         }
       }
     } catch (\Exception $e) {
-      $io->error('Configuration check failed: ' . $e->getMessage());
+      $output->writeln(' <error>✗</error> Configuration check failed: ' . $e->getMessage());
       $all_passed = false;
       // If config fails, we might not be able to proceed with other checks.
       if (empty($config)) {
+        $io->error('Fatal: Could not load configuration.');
         return Command::FAILURE;
       }
     }
 
     // 2. Database Connectivity Check
     if (!empty($config['database'])) {
-      $io->section('Checking Database Connectivity');
+      $output->writeln('');
+      $output->writeln('<comment>Checking Database Connectivity</comment>');
+      $output->writeln('------------------------------');
       try {
         $this->checkDatabase($config['database']);
-        $io->success('Successfully connected to the database.');
+        $output->writeln(' <info>✓</info> Successfully connected to the database.');
       } catch (\Exception $e) {
-        $io->error('Database connectivity failed: ' . $e->getMessage());
-        $io->note('Make sure your database credentials and host are correct and that "mysql" client is installed.');
+        $output->writeln(' <error>✗</error> Database connectivity failed: ' . $e->getMessage());
+        $output->writeln('   <comment>Note: Make sure your database credentials and host are correct and that "mysql" client is installed.</comment>');
         $all_passed = false;
       }
     }
 
     // 3. S3 Connectivity Check
     if (!empty($config['aws_bucket'])) {
-      $io->section('Checking S3 Connectivity');
+      $output->writeln('');
+      $output->writeln('<comment>Checking S3 Connectivity</comment>');
+      $output->writeln('------------------------');
       try {
         $this->checkS3($config);
-        $io->success('Successfully connected to S3 and bucket is accessible.');
+        $output->writeln(' <info>✓</info> Successfully connected to S3 and bucket is accessible.');
       } catch (\Exception $e) {
-        $io->error('S3 connectivity failed: ' . $e->getMessage());
-        $io->note('Check your AWS credentials, region, and bucket name.');
+        $output->writeln(' <error>✗</error> S3 connectivity failed: ' . $e->getMessage());
+        $output->writeln('   <comment>Note: Check your AWS credentials, region, and bucket name.</comment>');
         $all_passed = false;
       }
     }
 
     // 4. System Tools Check
-    $io->section('Checking System Tools');
+    $output->writeln('');
+    $output->writeln('<comment>Checking System Tools</comment>');
+    $output->writeln('---------------------');
     $tools = [
       'tar' => 'Required for creating and extracting archives.',
       'openssl' => 'Required for archive encryption and decryption.',
@@ -98,23 +106,25 @@ class HealthcheckCommand extends Command {
       try {
         $process = $process_runner->run([$tool, $tool === 'openssl' ? 'version' : '--version']);
         if ($process->isSuccessful()) {
-          $io->success(sprintf('%s is installed.', ucfirst($tool)));
+          $output->writeln(sprintf(' <info>✓</info> %s', $tool));
           if ($tool === 'openssl') {
             $openssl_available = true;
           }
         }
         else {
-          $io->note(sprintf('%s is not installed or not in the PATH. %s', ucfirst($tool), $description));
+          $output->writeln(sprintf(' <error>✗</error> %s — %s', $tool, $description));
         }
       } catch (\Exception $e) {
-        $io->note(sprintf('%s is not installed or not in the PATH. %s', ucfirst($tool), $description));
+        $output->writeln(sprintf(' <error>✗</error> %s — %s', $tool, $description));
       }
     }
 
     // 5. Encryption Settings Check
     $s3_encryption_enabled = !empty($config['encryption']['s3']) && $config['encryption']['s3'] === TRUE;
     if ($s3_encryption_enabled) {
-      $io->section('Checking Encryption Settings');
+      $output->writeln('');
+      $output->writeln('<comment>Checking Encryption Settings</comment>');
+      $output->writeln('----------------------------');
       try {
         if (empty($config['encryption']['password'])) {
           throw new \RuntimeException('Encryption password is not configured but S3 encryption is enabled.');
@@ -124,13 +134,36 @@ class HealthcheckCommand extends Command {
           throw new \RuntimeException('OpenSSL is not available but S3 encryption is enabled.');
         }
 
-        $io->success('Encryption password is set and OpenSSL is available.');
+        $output->writeln(' <info>✓</info> Encryption password is set and OpenSSL is available.');
       } catch (\Exception $e) {
-        $io->error('Encryption check failed: ' . $e->getMessage());
+        $output->writeln(' <error>✗</error> Encryption check failed: ' . $e->getMessage());
         $all_passed = false;
       }
     }
 
+    // 6. Security Checks
+    $output->writeln('');
+    $output->writeln('<comment>Checking Security</comment>');
+    $output->writeln('-----------------');
+    try {
+      $temp_file_factory = new \App\Service\TemporaryFileFactory();
+      $temp_path = $temp_file_factory->create(sys_get_temp_dir(), 'test', 'wb_hc_security_');
+      if (file_exists($temp_path)) {
+        $perms = fileperms($temp_path) & 0777;
+        if ($perms !== 0600) {
+          throw new \RuntimeException(sprintf('Temporary file created with insecure permissions: %o (expected 0600)', $perms));
+        }
+        $temp_file_factory->cleanup($temp_path);
+        $output->writeln(' <info>✓</info> Secure temporary file creation is working correctly.');
+      } else {
+        throw new \RuntimeException('Failed to create temporary security test file.');
+      }
+    } catch (\Exception $e) {
+      $output->writeln(' <error>✗</error> Security check failed: ' . $e->getMessage());
+      $all_passed = false;
+    }
+
+    $output->writeln('');
     if ($all_passed) {
       $io->success('All health checks passed!');
       return Command::SUCCESS;
@@ -141,25 +174,30 @@ class HealthcheckCommand extends Command {
   }
 
   private function checkDatabase(array $db_config): void {
-    $host = $db_config['host'] ?? 'localhost';
-    $user = $db_config['user'] ?? '';
-    $password = $db_config['password'] ?? '';
     $name = $db_config['name'] ?? '';
-    $port = $db_config['port'] ?? '';
 
-    $args = ['mysql', '--host=' . $host, '--user=' . $user, '--password=' . $password];
-    if ($port) {
-      $args[] = '--port=' . $port;
+    $create_mysql_temp_config = new \App\Helper\CreateMysqlTempConfig();
+    $temp_file_factory = new \App\Service\TemporaryFileFactory();
+    $temp_config = $create_mysql_temp_config($db_config);
+
+    try {
+      $args = [
+        'mysql',
+        '--defaults-extra-file=' . $temp_config,
+        '-e',
+        'SELECT 1',
+        $name,
+      ];
+
+      $process_runner = new ProcessRunner();
+      $process = $process_runner->run($args);
+
+      if (!$process->isSuccessful()) {
+        throw new \RuntimeException($process_runner->redact($process->getErrorOutput() ?: $process->getOutput()));
+      }
     }
-    $args[] = '-e';
-    $args[] = 'SELECT 1';
-    $args[] = $name;
-
-    $process_runner = new ProcessRunner();
-    $process = $process_runner->run($args);
-
-    if (!$process->isSuccessful()) {
-      throw new \RuntimeException($process->getErrorOutput() ?: $process->getOutput());
+    finally {
+      $temp_file_factory->cleanup($temp_config);
     }
   }
 
