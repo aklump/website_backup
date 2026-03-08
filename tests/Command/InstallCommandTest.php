@@ -39,6 +39,7 @@ class InstallCommandTest extends TestCase {
 
     $command = $application->find('install');
     $command_tester = new CommandTester($command);
+    $command_tester->setInputs(['yes']);
     $command_tester->execute([]);
 
     $this->assertFileExists($this->test_dir . '/bin/config/website_backup.yml');
@@ -50,6 +51,32 @@ class InstallCommandTest extends TestCase {
     $this->assertStringContainsString('WEBSITE_BACKUP_DATABASE_PASSWORD=', $env_content);
   }
 
+  public function testExecuteWithForce() {
+    $application = new Application();
+    $application->add(new InstallCommand());
+
+    $command = $application->find('install');
+    $command_tester = new CommandTester($command);
+    $command_tester->execute(['--force' => TRUE]);
+
+    $this->assertFileExists($this->test_dir . '/bin/config/website_backup.yml');
+    $this->assertFileExists($this->test_dir . '/.env');
+  }
+
+  public function testExecuteAborted() {
+    $application = new Application();
+    $application->add(new InstallCommand());
+
+    $command = $application->find('install');
+    $command_tester = new CommandTester($command);
+    $command_tester->setInputs(['no']);
+    $command_tester->execute([]);
+
+    $output = $command_tester->getDisplay();
+    $this->assertStringContainsString('Installation aborted.', $output);
+    $this->assertFileDoesNotExist($this->test_dir . '/bin/config/website_backup.yml');
+  }
+
   public function testExecuteWithExistingEnv() {
     file_put_contents($this->test_dir . '/.env', "EXISTING_VAR=foo");
 
@@ -58,6 +85,7 @@ class InstallCommandTest extends TestCase {
 
     $command = $application->find('install');
     $command_tester = new CommandTester($command);
+    $command_tester->setInputs(['yes']);
     $command_tester->execute([]);
 
     $env_content = file_get_contents($this->test_dir . '/.env');

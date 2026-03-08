@@ -36,7 +36,7 @@ class HealthcheckCommand extends Command {
 
     // 1. Configuration Check
     $output->writeln('<comment>Checking Configuration</comment>');
-    $output->writeln('----------------------');
+    $output->writeln('<comment>----------------------</comment>');
     try {
       $config = $loader->load();
       $loader->validate($config);
@@ -63,7 +63,7 @@ class HealthcheckCommand extends Command {
     if (!empty($config['database'])) {
       $output->writeln('');
       $output->writeln('<comment>Checking Database Connectivity</comment>');
-      $output->writeln('------------------------------');
+      $output->writeln('<comment>------------------------------</comment>');
       try {
         $this->checkDatabase($config['database']);
         $output->writeln(' <info>✓</info> Successfully connected to the database.');
@@ -78,7 +78,7 @@ class HealthcheckCommand extends Command {
     if (!empty($config['aws_bucket'])) {
       $output->writeln('');
       $output->writeln('<comment>Checking S3 Connectivity</comment>');
-      $output->writeln('------------------------');
+      $output->writeln('<comment>------------------------</comment>');
       try {
         $this->checkS3($config);
         $output->writeln(' <info>✓</info> Successfully connected to S3 and bucket is accessible.');
@@ -92,7 +92,7 @@ class HealthcheckCommand extends Command {
     // 4. System Tools Check
     $output->writeln('');
     $output->writeln('<comment>Checking System Tools</comment>');
-    $output->writeln('---------------------');
+    $output->writeln('<comment>---------------------</comment>');
     $tools = [
       'tar' => 'Required for creating and extracting archives.',
       'openssl' => 'Required for archive encryption and decryption.',
@@ -124,7 +124,7 @@ class HealthcheckCommand extends Command {
     if ($s3_encryption_enabled) {
       $output->writeln('');
       $output->writeln('<comment>Checking Encryption Settings</comment>');
-      $output->writeln('----------------------------');
+      $output->writeln('<comment>----------------------------</comment>');
       try {
         if (empty($config['encryption']['password'])) {
           throw new \RuntimeException('Encryption password is not configured but S3 encryption is enabled.');
@@ -144,7 +144,7 @@ class HealthcheckCommand extends Command {
     // 6. Security Checks
     $output->writeln('');
     $output->writeln('<comment>Checking Security</comment>');
-    $output->writeln('-----------------');
+    $output->writeln('<comment>-----------------</comment>');
     try {
       $temp_file_factory = new \App\Service\TemporaryFileFactory();
       $temp_path = $temp_file_factory->create(sys_get_temp_dir(), 'test', 'wb_hc_security_');
@@ -168,7 +168,7 @@ class HealthcheckCommand extends Command {
       $io->success('All health checks passed!');
       return Command::SUCCESS;
     } else {
-      $io->warning('Some health checks failed.');
+      $io->error('Some health checks failed.');
       return Command::FAILURE;
     }
   }

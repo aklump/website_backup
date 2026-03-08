@@ -13,11 +13,22 @@ class InstallCommand extends Command {
   protected static $defaultName = 'install';
 
   protected function configure(): void {
-    $this->setDescription('Installs website backup.');
+    $this
+      ->setDescription('Installs website backup.')
+      ->addOption('force', 'f', \Symfony\Component\Console\Input\InputOption::VALUE_NONE, 'Force the installation without confirmation.');
   }
 
   protected function execute(InputInterface $input, OutputInterface $output): int {
     $io = new SymfonyStyle($input, $output);
+
+    if (!$input->getOption('force')) {
+      if (!$io->confirm('Are you sure you want to proceed with the installation? This will create configuration and .env files in the current directory.', TRUE)) {
+        $io->note('Installation aborted.');
+
+        return Command::SUCCESS;
+      }
+    }
+
     $get_short_path = new GetShortPath();
     $cwd = getcwd();
     $app_root = dirname(__DIR__, 2);
