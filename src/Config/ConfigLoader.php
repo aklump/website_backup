@@ -8,6 +8,8 @@ use Symfony\Component\Dotenv\Dotenv;
 
 class ConfigLoader {
 
+  public const ENV_TOKEN_PATTERN = '/\${([^}]+)}/';
+
   private $appRoot;
 
   public function __construct(string $app_root) {
@@ -32,7 +34,7 @@ class ConfigLoader {
     if (file_exists($config_path)) {
       $content = file_get_contents($config_path);
       // Replace ${TOKEN} with env var values
-      $content = preg_replace_callback('/\${([^}]+)}/', function ($matches) {
+      $content = preg_replace_callback(static::ENV_TOKEN_PATTERN, function ($matches) {
         $env_var = $matches[1];
 
         return $_ENV[$env_var] ?? $_SERVER[$env_var] ?? getenv($env_var) ?: '';

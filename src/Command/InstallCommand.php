@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Config\ConfigLoader;
 use App\Helper\GetShortPath;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -62,7 +63,7 @@ class InstallCommand extends Command {
 
     // Scan for environment tokens
     $content = file_get_contents($install_config);
-    preg_match_all('/\${([^}]+)}/', $content, $matches);
+    preg_match_all(ConfigLoader::ENV_TOKEN_PATTERN, $content, $matches);
     $tokens = array_unique($matches[1]);
 
     if (!empty($tokens)) {
