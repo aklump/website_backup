@@ -32,6 +32,7 @@ class BackupService {
   }
 
   public function run(int $options = 0, $local_path = ''): void {
+    $this->validateOptions($options, (bool) $local_path);
     $start_time = microtime(TRUE);
     try {
       $this->doRun($options, $local_path);
@@ -315,14 +316,28 @@ class BackupService {
 
     $body .= "- Elapsed time: " . $elapsed . " seconds\n";
     $body .= "- Options used:\n";
-    $body .= "  - Database: " . ($has_database || !$has_files ? 'Yes' : 'No') . "\n";
-    $body .= "  - Files: " . ($has_files || !$has_database ? 'Yes' : 'No') . "\n";
+    $body .= "  - Database: " . ($has_database ? 'Yes' : 'No') . "\n";
+    $body .= "  - Files: " . ($has_files ? 'Yes' : 'No') . "\n";
     if ($local_path) {
       $body .= "  - Latest symlink: " . ($latest ? 'Yes' : 'No') . "\n";
     }
 
     if ($this->emailService->send($email_config['to'], $subject, $body)) {
       $this->output->writeln(sprintf('Email with subject "%s" was sent to: %s', $subject, implode(', ', $email_config['to'])));
+    }
+  }
+
+  private function validateOptions(int $options, bool $is_local): void {
+    $has_db = (bool) ($options & BackupOptions::DATABASE);
+    $has_files = (bool) ($options & BackupOptions::FILES);
+    if ($has_db && $has_files) {
+      throw new \InvalidArgumentException('The DATABASE and FILES options cannot be combined.');
+    }
+    if (($options & BackupOptions::ENCRYPT) && !($options & BackupOptions::GZIP)) {
+      throw new \InvalidArgumentException('The ENCRYPT option requires GZIP to be set.');
+    }
+    if (($options & BackupOptions::LATEST) && !$is_local) {
+      throw new \InvalidArgumentException('The LATEST option may only be used with local output.');
     }
   }
 }

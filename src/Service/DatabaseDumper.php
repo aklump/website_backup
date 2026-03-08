@@ -23,6 +23,9 @@ class DatabaseDumper {
   }
 
   public function dump(array $db_config, string $output_path, array $cache_tables = []): void {
+    if (empty($this->tempDir) || !is_dir($this->tempDir)) {
+      throw new \RuntimeException('DatabaseDumper temp directory is not set or invalid.');
+    }
     $name = $db_config['name'] ?? '';
     $mysqldump_bin = 'mysqldump'; // Could be made configurable
 

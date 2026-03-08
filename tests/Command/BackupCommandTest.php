@@ -52,6 +52,22 @@ class BackupCommandTest extends TestCase {
     ]);
   }
 
+  public function testBackupFailsWithDatabaseAndFiles() {
+    $application = new Application();
+    $application->add(new BackupCommand());
+
+    $command = $application->find('backup');
+    $command_tester = new CommandTester($command);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('The --database and --files options cannot be used together.');
+
+    $command_tester->execute([
+      '--database' => TRUE,
+      '--files' => TRUE,
+    ]);
+  }
+
   public function testBackupEncryptFailsWithoutLocalAndGzip() {
     $application = new Application();
     $application->add(new BackupCommand());
@@ -137,6 +153,7 @@ class BackupCommandTest extends TestCase {
 
     $command_tester->execute([
       '--local' => $local_path,
+      '--database' => TRUE,
     ]);
 
     $output = $command_tester->getDisplay();
@@ -229,6 +246,7 @@ class BackupCommandTest extends TestCase {
 
     $command_tester->execute([
       '--local' => $local_path,
+      '--database' => TRUE,
     ]);
 
     $output = $command_tester->getDisplay();
@@ -253,6 +271,7 @@ class BackupCommandTest extends TestCase {
     $command_tester->execute([
       '--local' => $local_path,
       '--gzip' => TRUE,
+      '--database' => TRUE,
     ]);
 
     $output = $command_tester->getDisplay();
@@ -281,6 +300,7 @@ class BackupCommandTest extends TestCase {
     $command_tester->execute([
       '--local' => $local_path,
       '--latest' => TRUE,
+      '--database' => TRUE,
     ]);
 
     $symlink = $local_path . '/example--latest';
@@ -302,6 +322,7 @@ class BackupCommandTest extends TestCase {
       '--local' => $local_path,
       '--gzip' => TRUE,
       '--latest' => TRUE,
+      '--database' => TRUE,
     ]);
 
     $symlink = $local_path . '/example--latest.tar.gz';

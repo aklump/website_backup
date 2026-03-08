@@ -42,11 +42,16 @@ class BackupCommand extends Command {
 
     $gzip = $input->getOption('gzip');
     if ($gzip && !$local) {
+      // S3 output is always archived as .tar.gz, so --gzip only applies to
+      // local backups.
       throw new \RuntimeException('The --gzip option may only be used with --local.');
     }
 
     $encrypt = $input->getOption('encrypt');
     if ($encrypt && (!$local || !$gzip)) {
+      // S3 encryption is controlled by YAML configuration, so --encrypt only
+      // applies to local archive output and therefore requires --local and
+      // --gzip options.
       throw new \RuntimeException('The --encrypt option may only be used with --local and --gzip.');
     }
 
@@ -62,18 +67,11 @@ class BackupCommand extends Command {
     $loader->validate($config, (bool) $local, $input->getOption('notify'), (bool) $encrypt);
 
     $options = 0;
-    // Defaults to both database and files if neither is specified
-    if (!$input->getOption('files') && !$input->getOption('database')) {
+    if ($input->getOption('database')) {
       $options |= BackupOptions::DATABASE;
-      $options |= BackupOptions::FILES;
     }
-    else {
-      if ($input->getOption('database')) {
-        $options |= BackupOptions::DATABASE;
-      }
-      if ($input->getOption('files')) {
-        $options |= BackupOptions::FILES;
-      }
+    if ($input->getOption('files')) {
+      $options |= BackupOptions::FILES;
     }
     if ($input->getOption('latest')) {
       $options |= BackupOptions::LATEST;

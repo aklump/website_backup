@@ -35,7 +35,7 @@ class DatabaseDumperTest extends TestCase {
     });
 
     $dumper = new DatabaseDumper($mock_runner);
-    $dumper->temp_dir = $this->test_dir;
+    $dumper->setTempDir($this->test_dir);
 
     $db_config = [
       'host' => 'localhost',
@@ -87,7 +87,7 @@ class DatabaseDumperTest extends TestCase {
     });
 
     $dumper = new DatabaseDumper($mock_runner);
-    $dumper->temp_dir = $this->test_dir;
+    $dumper->setTempDir($this->test_dir);
     
     $db_config = [
       'host' => 'localhost',
@@ -121,5 +121,15 @@ class DatabaseDumperTest extends TestCase {
       }
       $this->assertTrue($has_defaults, 'Command missing --defaults-extra-file: ' . implode(' ', $args));
     }
+  }
+
+  public function testDumpFailsWithoutTempDir() {
+    $mock_runner = $this->createMock(ProcessRunner::class);
+    $dumper = new DatabaseDumper($mock_runner);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('DatabaseDumper temp directory is not set or invalid.');
+
+    $dumper->dump(['name' => 'db'], 'output.sql');
   }
 }
