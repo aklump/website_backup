@@ -41,26 +41,22 @@ class GenerateCrontabCommand extends Command {
 
     // Calculate current PHP path for the "cookie"
     $php_path_default = dirname(PHP_BINARY);
-    $php_path = $io->ask(sprintf('Enter the path to the PHP binary directory (leave empty to use %s)', $php_path_default));
+    $php_path = $io->ask('Confirm the PHP binary directory', $php_path_default, [
+      $this,
+      'directoryValidator',
+    ]);
     $php_path = trim($php_path);
-    if ($php_path === '.') {
-      $php_path = '';
-    }
 
     $tmpdir_default = sys_get_temp_dir();
-    $tmpdir = $io->ask(sprintf('Enter the path to the temporary directory (leave empty to use %s)', $tmpdir_default));
+    $tmpdir = $io->ask('Confirm the PHP binary directory', $tmpdir_default, [
+      $this,
+      'directoryValidator',
+    ]);
     $tmpdir = trim($tmpdir);
-    if ($tmpdir === '.') {
-      $tmpdir = '';
-    }
 
     $parts = [];
-    if (!empty($tmpdir)) {
-      $parts[] = sprintf('TMPDIR="%s"', $tmpdir);
-    }
-    if (!empty($php_path)) {
-      $parts[] = sprintf('PATH="%s:$PATH"', $php_path);
-    }
+    $parts[] = sprintf('TMPDIR="%s"', $tmpdir);
+    $parts[] = sprintf('PATH="%s:$PATH"', $php_path);
 
     // TODO This is brittle; move it
     $binary = $project_root . 'vendor/bin/website-backup';
@@ -79,4 +75,17 @@ class GenerateCrontabCommand extends Command {
 
     return Command::SUCCESS;
   }
+
+  private function directoryValidator($value): string {
+    $value = trim((string) $value);
+    if ($value === '') {
+      throw new \RuntimeException('This value is required.');
+    }
+    if (!is_dir($value)) {
+      throw new \RuntimeException('Directory does not exist.');
+    }
+
+    return $value;
+  }
+
 }
