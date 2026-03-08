@@ -4,8 +4,8 @@ namespace AKlump\WebsiteBackup\Command;
 
 use AKlump\WebsiteBackup\Config\ConfigLoader;
 use AKlump\WebsiteBackup\Helper\GetInstalledInRoot;
-use AKlump\WebsiteBackup\Service\BackupOptions;
 use AKlump\WebsiteBackup\Service\BackupService;
+use AKlump\WebsiteBackup\Traits\CommandTrait;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -13,6 +13,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class BackupS3Command extends Command {
+
+  use CommandTrait;
 
   protected static $defaultName = 'backup:s3';
 
@@ -50,16 +52,7 @@ class BackupS3Command extends Command {
 
     $loader->validate($config, FALSE, $input->getOption('notify'), FALSE);
 
-    $options = 0;
-    if ($input->getOption('database')) {
-      $options |= BackupOptions::DATABASE;
-    }
-    if ($input->getOption('files')) {
-      $options |= BackupOptions::FILES;
-    }
-    if ($input->getOption('notify')) {
-      $options |= BackupOptions::NOTIFY;
-    }
+    $options = $this->getCommonBackupOptions($input);
 
     $service = new BackupService($config, $output);
     $service->run($options, '');
