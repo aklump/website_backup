@@ -1,7 +1,24 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+if (isset($GLOBALS['_composer_autoload_path'])) {
+  // As of Composer 2.2...
+  $_composer_autoload_path = $GLOBALS['_composer_autoload_path'];
+}
+else {
+  // < Composer 2.2
+  $ds = DIRECTORY_SEPARATOR;
+  foreach ([
+               __DIR__ . $ds . '..' . $ds . '..' . $ds . 'autoload.php',
+               __DIR__ . $ds . '..' . $ds . 'vendor' . $ds . 'autoload.php',
+               __DIR__ . $ds . 'vendor' . $ds . 'autoload.php',
+           ] as $_composer_autoload_path) {
+    if (file_exists($_composer_autoload_path)) {
+      break;
+    }
+  }
+}
+require_once $_composer_autoload_path;
 
 use Symfony\Component\Console\Application;
 use AKlump\WebsiteBackup\Command\BackupLocalCommand;

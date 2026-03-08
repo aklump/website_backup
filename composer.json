@@ -31,6 +31,6 @@
     }
   },
   "bin": [
-    "bin/website_backup"
+    "bin/website-backup"
   ]
 }
