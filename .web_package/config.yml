@@ -8,4 +8,4 @@ push_master: true
 push_tags: true
 remote: origin
 version_file: .web_package/config.yml
-version: 0.1.1
+version: 0.1.2
