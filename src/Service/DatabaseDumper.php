@@ -10,7 +10,7 @@ class DatabaseDumper {
 
   private $createMysqlTempConfig;
 
-  public $temp_dir;
+  private $tempDir;
 
   public function __construct(ProcessRunner $processRunner) {
     $this->processRunner = $processRunner;
@@ -18,11 +18,15 @@ class DatabaseDumper {
     $this->createMysqlTempConfig = new \App\Helper\CreateMysqlTempConfig();
   }
 
+  public function setTempDir(string $path): void {
+    $this->tempDir = $path;
+  }
+
   public function dump(array $db_config, string $output_path, array $cache_tables = []): void {
     $name = $db_config['name'] ?? '';
     $mysqldump_bin = 'mysqldump'; // Could be made configurable
 
-    $temp_config = ($this->createMysqlTempConfig)($db_config, $this->temp_dir);
+    $temp_config = ($this->createMysqlTempConfig)($db_config, $this->tempDir);
     try {
       $common_args = [
         $mysqldump_bin,

@@ -4,8 +4,6 @@
 
 - set version in bin/wb
 - token scanner in InstallCommand can be combined with... ConfigLoader?
-- change \App\Service\BackupService::run to use bitwise operators
-- create a class for bitwise values
 
 ## Normal
 
@@ -17,6 +15,5 @@
 - add git tag to the backup name website_backup?
 
 ## Notes
-
 
 

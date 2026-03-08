@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Config\ConfigLoader;
 use App\Helper\GetInstalledInRoot;
+use App\Service\BackupOptions;
 use App\Service\BackupService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -60,16 +61,35 @@ class BackupCommand extends Command {
 
     $loader->validate($config, (bool) $local, $input->getOption('notify'), (bool) $encrypt);
 
+    $options = 0;
+    // Defaults to both database and files if neither is specified
+    if (!$input->getOption('files') && !$input->getOption('database')) {
+      $options |= BackupOptions::DATABASE;
+      $options |= BackupOptions::FILES;
+    }
+    else {
+      if ($input->getOption('database')) {
+        $options |= BackupOptions::DATABASE;
+      }
+      if ($input->getOption('files')) {
+        $options |= BackupOptions::FILES;
+      }
+    }
+    if ($input->getOption('latest')) {
+      $options |= BackupOptions::LATEST;
+    }
+    if ($input->getOption('notify')) {
+      $options |= BackupOptions::NOTIFY;
+    }
+    if ($gzip) {
+      $options |= BackupOptions::GZIP;
+    }
+    if ($encrypt) {
+      $options |= BackupOptions::ENCRYPT;
+    }
+
     $service = new BackupService($config, $output);
-    $service->run(
-      $local ?: FALSE,
-      $input->getOption('latest'),
-      $input->getOption('database'),
-      $input->getOption('files'),
-      $input->getOption('notify'),
-      (bool) $gzip,
-      (bool) $encrypt
-    );
+    $service->run($options, $local ?: '');
 
     return Command::SUCCESS;
   }
