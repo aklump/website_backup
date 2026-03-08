@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace AKlump\WebsiteBackup\Service;
 
 class DatabaseDumper {
 
@@ -15,7 +15,7 @@ class DatabaseDumper {
   public function __construct(ProcessRunner $processRunner) {
     $this->processRunner = $processRunner;
     $this->tempFileFactory = new TemporaryFileFactory();
-    $this->createMysqlTempConfig = new \App\Helper\CreateMysqlTempConfig();
+    $this->createMysqlTempConfig = new \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig();
   }
 
   public function setTempDir(string $path): void {

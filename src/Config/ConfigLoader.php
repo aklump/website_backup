@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Config;
+namespace AKlump\WebsiteBackup\Config;
 
-use App\Helper\GetShortPath;
+use AKlump\WebsiteBackup\Helper\GetShortPath;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Dotenv\Dotenv;
 

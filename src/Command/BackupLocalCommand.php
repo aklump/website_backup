@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Command;
+namespace AKlump\WebsiteBackup\Command;
 
-use App\Config\ConfigLoader;
-use App\Helper\GetInstalledInRoot;
-use App\Service\BackupOptions;
-use App\Service\BackupService;
+use AKlump\WebsiteBackup\Config\ConfigLoader;
+use AKlump\WebsiteBackup\Helper\GetInstalledInRoot;
+use AKlump\WebsiteBackup\Service\BackupOptions;
+use AKlump\WebsiteBackup\Service\BackupService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;

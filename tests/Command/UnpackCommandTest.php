@@ -1,13 +1,16 @@
 <?php
 
-namespace App\Tests\Command;
+namespace AKlump\WebsiteBackup\Tests\Command;
 
-use App\Command\UnpackCommand;
+use AKlump\WebsiteBackup\Command\UnpackCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Command\UnpackCommand
+ */
 class UnpackCommandTest extends TestCase {
 
   private $test_dir;

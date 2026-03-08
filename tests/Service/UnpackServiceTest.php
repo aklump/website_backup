@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\UnpackService;
+use AKlump\WebsiteBackup\Service\UnpackService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\UnpackService
+ */
 class UnpackServiceTest extends TestCase {
 
   private $test_dir;

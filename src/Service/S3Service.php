@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace AKlump\WebsiteBackup\Service;
 
 use Aws\S3\S3Client;
 

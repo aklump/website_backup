@@ -1,13 +1,17 @@
 <?php
 
-namespace App\Tests\Command;
+namespace AKlump\WebsiteBackup\Tests\Command;
 
-use App\Command\BackupLocalCommand;
-use App\Command\BackupS3Command;
+use AKlump\WebsiteBackup\Command\BackupLocalCommand;
+use AKlump\WebsiteBackup\Command\BackupS3Command;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Command\BackupLocalCommand
+ * @covers \AKlump\WebsiteBackup\Command\BackupS3Command
+ */
 class BackupCommandTest extends TestCase {
 
   private $test_dir;

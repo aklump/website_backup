@@ -1,13 +1,16 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\DatabaseDumper;
-use App\Service\ProcessRunner;
+use AKlump\WebsiteBackup\Service\DatabaseDumper;
+use AKlump\WebsiteBackup\Service\ProcessRunner;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\DatabaseDumper
+ */
 class DatabaseDumperTest extends TestCase {
 
   private $test_dir;

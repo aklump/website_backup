@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Tests\Command;
+namespace AKlump\WebsiteBackup\Tests\Command;
 
-use App\Command\HealthcheckCommand;
+use AKlump\WebsiteBackup\Command\HealthcheckCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Command\HealthcheckCommand
+ */
 class HealthcheckCommandTest extends TestCase {
 
   private $test_dir;
@@ -198,6 +201,37 @@ YAML;
 
     $output = $command_tester->getDisplay();
     $this->assertStringContainsString('Encryption password is not configured', $output);
+  }
+
+  public function testExecuteS3CheckHandlesNullCredentials() {
+    $config = <<<YAML
+manifest: [foo]
+aws_region: us-west-1
+aws_bucket: example
+aws_retention:
+  keep_daily_for_days: 1
+  keep_monthly_for_months: 1
+database: { handler: null }
+YAML;
+    // Note: aws_access_key_id and aws_secret_access_key are missing.
+    // ConfigLoader::validate() will fail if we call it for non-local backup.
+    // However, HealthcheckCommand calls validate($config) which defaults to $is_local = false.
+    // So it should fail in Configuration Check section.
+
+    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
+
+    $application = new Application();
+    $application->add(new HealthcheckCommand());
+
+    $command = $application->find('healthcheck');
+    $command_tester = new CommandTester($command);
+    $exit_code = $command_tester->execute([]);
+
+    $this->assertEquals(1, $exit_code);
+    $output = $command_tester->getDisplay();
+    $this->assertStringContainsString('Configuration check failed', $output);
+    $this->assertStringContainsString('Missing required configuration', $output);
+    $this->assertStringContainsString('aws_access_key_id', $output);
   }
 
   public function testExecuteFailsWithInvalidManifest() {

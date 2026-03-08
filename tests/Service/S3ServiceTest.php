@@ -1,11 +1,14 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\S3Service;
+use AKlump\WebsiteBackup\Service\S3Service;
 use PHPUnit\Framework\TestCase;
 use Aws\Result;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\S3Service
+ */
 class S3ServiceTest extends TestCase {
 
   public function testPruneByRetention() {

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Helper;
+namespace AKlump\WebsiteBackup\Helper;
 
-use App\Service\TemporaryFileFactory;
+use AKlump\WebsiteBackup\Service\TemporaryFileFactory;
 
 /**
  * Creates a temporary MySQL configuration file for use with --defaults-extra-file.

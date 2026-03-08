@@ -4,11 +4,11 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
-use App\Command\BackupLocalCommand;
-use App\Command\BackupS3Command;
-use App\Command\InstallCommand;
-use App\Command\HealthcheckCommand;
-use App\Command\UnpackCommand;
+use AKlump\WebsiteBackup\Command\BackupLocalCommand;
+use AKlump\WebsiteBackup\Command\BackupS3Command;
+use AKlump\WebsiteBackup\Command\InstallCommand;
+use AKlump\WebsiteBackup\Command\HealthcheckCommand;
+use AKlump\WebsiteBackup\Command\UnpackCommand;
 
 $application = new Application('Website Backup');
 $application->setVersion('0.0.28');

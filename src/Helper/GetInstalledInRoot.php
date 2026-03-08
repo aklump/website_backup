@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Helper;
+namespace AKlump\WebsiteBackup\Helper;
 
 /**
  * Locate the root path where this is installed

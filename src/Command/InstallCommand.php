@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Command;
+namespace AKlump\WebsiteBackup\Command;
 
-use App\Config\ConfigLoader;
-use App\Helper\GetShortPath;
+use AKlump\WebsiteBackup\Config\ConfigLoader;
+use AKlump\WebsiteBackup\Helper\GetShortPath;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;

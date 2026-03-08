@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Service;
+namespace AKlump\WebsiteBackup\Service;
 
-use App\Helper\GetShortPath;
+use AKlump\WebsiteBackup\Helper\GetShortPath;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class BackupService {

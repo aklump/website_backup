@@ -1,11 +1,14 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\TemporaryFileFactory;
+use AKlump\WebsiteBackup\Service\TemporaryFileFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\TemporaryFileFactory
+ */
 class TemporaryFileFactoryTest extends TestCase {
 
   private $test_dir;

@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\BackupOptions;
-use App\Service\BackupService;
+use AKlump\WebsiteBackup\Service\BackupOptions;
+use AKlump\WebsiteBackup\Service\BackupService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\NullOutput;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\BackupService
+ */
 class BackupServiceTest extends TestCase {
 
   public function testRunRejectsCombinedDatabaseAndFiles() {

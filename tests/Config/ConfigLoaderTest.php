@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Tests\Config;
+namespace AKlump\WebsiteBackup\Tests\Config;
 
-use App\Config\ConfigLoader;
+use AKlump\WebsiteBackup\Config\ConfigLoader;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Config\ConfigLoader
+ */
 class ConfigLoaderTest extends TestCase {
 
   private $test_app_root;

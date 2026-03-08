@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\TempDirectoryFactory;
+use AKlump\WebsiteBackup\Service\TempDirectoryFactory;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\TempDirectoryFactory
+ */
 class TempDirectoryFactoryTest extends TestCase {
 
   private string $test_base;

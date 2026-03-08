@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Command;
+namespace AKlump\WebsiteBackup\Command;
 
-use App\Config\ConfigLoader;
-use App\Helper\GetInstalledInRoot;
-use App\Service\ManifestService;
-use App\Service\ProcessRunner;
-use App\Service\S3Service;
+use AKlump\WebsiteBackup\Config\ConfigLoader;
+use AKlump\WebsiteBackup\Helper\GetInstalledInRoot;
+use AKlump\WebsiteBackup\Service\ManifestService;
+use AKlump\WebsiteBackup\Service\ProcessRunner;
+use AKlump\WebsiteBackup\Service\S3Service;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -90,7 +90,7 @@ class HealthcheckCommand extends Command {
     }
 
     // 4. S3 Connectivity Check
-    if (!empty($config['aws_bucket'])) {
+    if (!empty($config['aws_bucket']) && !empty($config['aws_access_key_id']) && !empty($config['aws_secret_access_key'])) {
       $output->writeln('');
       $output->writeln('<comment>Checking S3 Connectivity</comment>');
       $output->writeln('<comment>------------------------</comment>');
@@ -102,6 +102,13 @@ class HealthcheckCommand extends Command {
         $output->writeln('   <comment>Note: Check your AWS credentials, region, and bucket name.</comment>');
         $all_passed = false;
       }
+    }
+    elseif (!empty($config['aws_bucket'])) {
+      $output->writeln('');
+      $output->writeln('<comment>Checking S3 Connectivity</comment>');
+      $output->writeln('<comment>------------------------</comment>');
+      $output->writeln(' <error>✗</error> S3 connectivity check skipped because AWS credentials are missing.');
+      $all_passed = false;
     }
 
     // 5. System Tools Check
@@ -161,7 +168,7 @@ class HealthcheckCommand extends Command {
     $output->writeln('<comment>Checking Security</comment>');
     $output->writeln('<comment>-----------------</comment>');
     try {
-      $temp_file_factory = new \App\Service\TemporaryFileFactory();
+      $temp_file_factory = new \AKlump\WebsiteBackup\Service\TemporaryFileFactory();
       $temp_path = $temp_file_factory->create(sys_get_temp_dir(), 'test', 'wb_hc_security_');
       if (file_exists($temp_path)) {
         $perms = fileperms($temp_path) & 0777;
@@ -191,8 +198,8 @@ class HealthcheckCommand extends Command {
   private function checkDatabase(array $db_config): void {
     $name = $db_config['name'] ?? '';
 
-    $create_mysql_temp_config = new \App\Helper\CreateMysqlTempConfig();
-    $temp_file_factory = new \App\Service\TemporaryFileFactory();
+    $create_mysql_temp_config = new \AKlump\WebsiteBackup\Helper\CreateMysqlTempConfig();
+    $temp_file_factory = new \AKlump\WebsiteBackup\Service\TemporaryFileFactory();
     $temp_config = $create_mysql_temp_config($db_config);
 
     try {

@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Tests\Service;
+namespace AKlump\WebsiteBackup\Tests\Service;
 
-use App\Service\ManifestService;
+use AKlump\WebsiteBackup\Service\ManifestService;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Service\ManifestService
+ */
 class ManifestServiceTest extends TestCase {
 
   private $source_dir;

@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Tests\Command;
+namespace AKlump\WebsiteBackup\Tests\Command;
 
-use App\Command\InstallCommand;
+use AKlump\WebsiteBackup\Command\InstallCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Command\InstallCommand
+ */
 class InstallCommandTest extends TestCase {
 
   private $test_dir;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace AKlump\WebsiteBackup\Service;
 
 use Symfony\Component\Filesystem\Filesystem;
 
