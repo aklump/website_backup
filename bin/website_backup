@@ -11,7 +11,7 @@ use AKlump\WebsiteBackup\Command\HealthcheckCommand;
 use AKlump\WebsiteBackup\Command\UnpackCommand;
 
 $application = new Application('Website Backup');
-$application->setVersion('0.0.28');
+$application->setVersion('0.1.0');
 
 // Config and services setup will happen here later.
 
