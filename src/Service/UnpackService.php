@@ -13,6 +13,7 @@ class UnpackService {
   private $processRunner;
   private $getShortPath;
   private $fs;
+  private $tempDirectoryFactory;
 
   public function __construct(array $config, OutputInterface $output) {
     $this->config = $config;
@@ -20,6 +21,7 @@ class UnpackService {
     $this->processRunner = new ProcessRunner();
     $this->getShortPath = new GetShortPath();
     $this->fs = new Filesystem();
+    $this->tempDirectoryFactory = new TempDirectoryFactory();
   }
 
   /**
@@ -64,14 +66,12 @@ class UnpackService {
 
     $this->validateDependencies($is_encrypted);
 
-    $temp_base = sys_get_temp_dir() . '/website_backup_unpack_' . uniqid();
-    $this->fs->mkdir($temp_base);
+    $temp_base = $this->tempDirectoryFactory->create('website_backup_unpack_');
     $extract_to = $temp_base . '/extracted';
     $this->fs->mkdir($extract_to);
 
     try {
       $working_file = $source_path;
-      $temp_decrypted = null;
 
       if ($is_encrypted) {
         $this->output->writeln('<comment>Decrypting archive</comment>');
@@ -117,7 +117,7 @@ class UnpackService {
       }
 
     } finally {
-      $this->fs->remove($temp_base);
+      $this->tempDirectoryFactory->cleanup($temp_base);
     }
 
     return $dest_path;

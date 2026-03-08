@@ -12,8 +12,8 @@ class BackupCommandTest extends TestCase {
   private $test_dir;
 
   protected function setUp(): void {
-    $this->test_dir = sys_get_temp_dir() . '/website_backup_test_' . uniqid();
-    mkdir($this->test_dir, 0777, TRUE);
+    $this->test_dir = sys_get_temp_dir() . '/website_backup_test_' . bin2hex(random_bytes(8));
+    mkdir($this->test_dir, 0700, TRUE);
     mkdir($this->test_dir . '/bin/config', 0777, TRUE);
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example");
     chdir($this->test_dir);
@@ -97,7 +97,27 @@ class BackupCommandTest extends TestCase {
   }
 
   public function testBackupS3WithForceBypassesConfirmation() {
-    // ... (existing test)
+    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1";
+    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
+
+    $application = new Application();
+    $application->add(new BackupCommand());
+
+    $command = $application->find('backup');
+    $command_tester = new CommandTester($command);
+
+    // If it doesn't prompt, it will proceed to try to run the backup service.
+    // We expect it to fail eventually because S3/credentials are fake,
+    // but the important thing is that it doesn't wait for input.
+    try {
+      $command_tester->execute(['--force' => TRUE]);
+    }
+    catch (\Exception $e) {
+      // Ignore failures during actual backup execution in this test.
+    }
+
+    $output = $command_tester->getDisplay();
+    $this->assertStringNotContainsString('You are about to backup to S3', $output);
   }
 
   public function testBackupWithNotifySendsNoEmailWhenOmitted() {

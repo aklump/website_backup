@@ -12,8 +12,8 @@ class InstallCommandTest extends TestCase {
   private $test_dir;
 
   protected function setUp(): void {
-    $this->test_dir = sys_get_temp_dir() . '/website_backup_test_' . uniqid();
-    mkdir($this->test_dir, 0777, TRUE);
+    $this->test_dir = sys_get_temp_dir() . '/website_backup_install_test_' . bin2hex(random_bytes(8));
+    mkdir($this->test_dir, 0700, TRUE);
     chdir($this->test_dir);
   }
 

@@ -10,12 +10,12 @@ class ConfigLoaderTest extends TestCase {
   private $test_app_root;
 
   protected function setUp(): void {
-    $this->test_app_root = sys_get_temp_dir() . '/website_backup_test';
+    $this->test_app_root = sys_get_temp_dir() . '/website_backup_loader_test_' . bin2hex(random_bytes(8));
     if (!is_dir($this->test_app_root)) {
-      mkdir($this->test_app_root, 0777, TRUE);
+      mkdir($this->test_app_root, 0700, TRUE);
     }
-    mkdir($this->test_app_root . '/bin/config', 0777, TRUE);
-    mkdir($this->test_app_root . '/app_path', 0777, TRUE);
+    mkdir($this->test_app_root . '/bin/config', 0700, TRUE);
+    mkdir($this->test_app_root . '/app_path', 0700, TRUE);
   }
 
   protected function tearDown(): void {

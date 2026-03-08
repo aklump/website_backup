@@ -27,7 +27,7 @@ class HealthcheckCommand extends Command {
 
     $root = (new GetInstalledInRoot())();
     if (!$root) {
-      $io->error('Could not find the application root. Make sure bin/config/website_backup.yml exists.');
+      $io->error('Could not find the application root; did you run install yet? Make sure bin/config/website_backup.yml exists.');
       return Command::FAILURE;
     }
 

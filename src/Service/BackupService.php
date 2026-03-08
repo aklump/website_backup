@@ -19,6 +19,8 @@ class BackupService {
 
   private $emailService;
 
+  private $tempDirectoryFactory;
+
   public function __construct(array $config, OutputInterface $output) {
     $this->config = $config;
     $this->output = $output;
@@ -26,6 +28,7 @@ class BackupService {
     $this->databaseDumper = new DatabaseDumper($this->processRunner);
     $this->getShortPath = new GetShortPath();
     $this->emailService = new EmailService($output);
+    $this->tempDirectoryFactory = new TempDirectoryFactory();
   }
 
   public function run($local_path = FALSE, bool $latest = FALSE, bool $only_db = FALSE, bool $only_files = FALSE, bool $notify = FALSE, bool $gzip = FALSE, bool $encrypt = FALSE): void {
@@ -52,13 +55,13 @@ class BackupService {
     $full_object_name = $object_name_base . '--' . $timestamp;
     $latest_symlink_name = $object_name_base . '--latest';
 
-    $staging_dir = sys_get_temp_dir() . '/website_backup/' . $full_object_name;
-    if (!is_dir($staging_dir)) {
-      if (!mkdir($staging_dir, 0777, TRUE)) {
+    $temp_work_dir = $this->tempDirectoryFactory->create();
+    try {
+      $staging_dir = $temp_work_dir . '/' . $full_object_name;
+      if (!mkdir($staging_dir, 0700)) {
         throw new \RuntimeException(sprintf('Could not create the local object directory: %s', $staging_dir));
       }
-    }
-    $this->output->writeln(sprintf('Staging in: %s', ($this->getShortPath)($staging_dir)), OutputInterface::VERBOSITY_DEBUG);
+      $this->output->writeln(sprintf('Staging in: %s', ($this->getShortPath)($staging_dir)), OutputInterface::VERBOSITY_DEBUG);
 
     // 1. Database export
     if (!empty($this->config['database']['handler']) && ($only_db || !$only_files)) {
@@ -96,14 +99,14 @@ class BackupService {
         $this->output->writeln('<comment>Compressing object</comment>');
         $start = microtime(TRUE);
         $archive_name = $full_object_name . '.tar.gz';
-        $archive_path = dirname($staging_dir) . '/' . $archive_name;
+        $archive_path = $temp_work_dir . '/' . $archive_name;
 
         $process = $this->processRunner->run([
           'tar',
           '-czf',
           $archive_name,
           $full_object_name,
-        ], dirname($staging_dir));
+        ], $temp_work_dir);
         if (!$process->isSuccessful()) {
           throw new \RuntimeException('Could not compress object.');
         }
@@ -117,7 +120,7 @@ class BackupService {
           $this->output->writeln('<comment>Encrypting object</comment>');
           $start = microtime(TRUE);
           $encrypted_name = $archive_name . '.enc';
-          $encrypted_path = dirname($staging_dir) . '/' . $encrypted_name;
+          $encrypted_path = $temp_work_dir . '/' . $encrypted_name;
 
           $process = $this->processRunner->run(
             [
@@ -133,7 +136,7 @@ class BackupService {
               '-pass',
               'env:WEBSITE_BACKUP_ENCRYPTION_PASSWORD',
             ],
-            dirname($staging_dir),
+            $temp_work_dir,
             ['WEBSITE_BACKUP_ENCRYPTION_PASSWORD' => $this->config['encryption']['password']]
           );
 
@@ -168,9 +171,6 @@ class BackupService {
           symlink($final_artifact_name, basename($symlink_path));
           chdir($cwd);
         }
-
-        // Cleanup staging
-        $this->processRunner->run(['rm', '-rf', $staging_dir]);
       }
       else {
         $destination = rtrim($local_path, '/') . '/' . $full_object_name;
@@ -198,14 +198,14 @@ class BackupService {
       $this->output->writeln('<comment>Compressing object</comment>');
       $start = microtime(TRUE);
       $archive_name = $full_object_name . '.tar.gz';
-      $archive_path = dirname($staging_dir) . '/' . $archive_name;
+      $archive_path = $temp_work_dir . '/' . $archive_name;
 
       $process = $this->processRunner->run([
         'tar',
         '-czf',
         $archive_name,
         $full_object_name,
-      ], dirname($staging_dir));
+      ], $temp_work_dir);
       if (!$process->isSuccessful()) {
         throw new \RuntimeException('Could not compress object.');
       }
@@ -219,7 +219,7 @@ class BackupService {
         $this->output->writeln('<comment>Encrypting object</comment>');
         $start = microtime(TRUE);
         $final_artifact_name = $archive_name . '.enc';
-        $final_artifact_path = dirname($staging_dir) . '/' . $final_artifact_name;
+        $final_artifact_path = $temp_work_dir . '/' . $final_artifact_name;
 
         $process = $this->processRunner->run(
           [
@@ -235,7 +235,7 @@ class BackupService {
             '-pass',
             'env:WEBSITE_BACKUP_ENCRYPTION_PASSWORD',
           ],
-          dirname($staging_dir),
+          $temp_work_dir,
           ['WEBSITE_BACKUP_ENCRYPTION_PASSWORD' => $this->config['encryption']['password']]
         );
 
@@ -264,15 +264,12 @@ class BackupService {
 
       // Prune
       $s3->pruneByRetention($this->config['aws_retention']);
-
-      // Cleanup
-      if (file_exists($final_artifact_path)) {
-        unlink($final_artifact_path);
-      }
-      $this->processRunner->run(['rm', '-rf', $staging_dir]);
     }
 
     $this->output->writeln('<info>Backup completed</info>');
+    } finally {
+      $this->tempDirectoryFactory->cleanup($temp_work_dir);
+    }
   }
 
   private function sendNotification(bool $success, $local_path, bool $only_db, bool $only_files, bool $latest, float $start_time, \Exception $exception = NULL, bool $encrypt = FALSE): void {

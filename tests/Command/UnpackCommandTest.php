@@ -15,9 +15,9 @@ class UnpackCommandTest extends TestCase {
   private $fs;
 
   protected function setUp(): void {
-    $this->test_dir = sys_get_temp_dir() . '/website_backup_unpack_command_test_' . uniqid();
+    $this->test_dir = sys_get_temp_dir() . '/website_backup_unpack_command_test_' . bin2hex(random_bytes(8));
     $this->fs = new Filesystem();
-    $this->fs->mkdir($this->test_dir);
+    $this->fs->mkdir($this->test_dir, 0700);
     $this->fs->mkdir($this->test_dir . '/bin/config');
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', "manifest: [foo]\ndatabase: { handler: null }");
     chdir($this->test_dir);

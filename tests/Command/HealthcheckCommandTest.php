@@ -12,8 +12,8 @@ class HealthcheckCommandTest extends TestCase {
   private $test_dir;
 
   protected function setUp(): void {
-    $this->test_dir = sys_get_temp_dir() . '/website_backup_healthcheck_test_' . uniqid();
-    mkdir($this->test_dir, 0777, TRUE);
+    $this->test_dir = sys_get_temp_dir() . '/website_backup_healthcheck_test_' . bin2hex(random_bytes(8));
+    mkdir($this->test_dir, 0700, TRUE);
     mkdir($this->test_dir . '/bin/config', 0777, TRUE);
     chdir($this->test_dir);
   }
