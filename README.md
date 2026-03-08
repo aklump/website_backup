@@ -30,6 +30,12 @@ A script to perform routine backups of critical website files and database.  Hig
     ```cronexp
     0 1 * * * export PATH=/usr/local/php81/bin:$PATH;/var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "FOO backup" me@developer.com
     ```
+- You may have to include the FROM address using the `-r` flag like this:
+
+    ```cronexp
+    0 1 * * * export PATH=/usr/local/php81/bin:$PATH;/var/www/mywebsite.org/app/bin/website_backup bu  2>&1 | mail -s "FOO backup" -r info@mywebsite.org me@developer.com
+    ```
+
 ## Requirements
 
 You must have [Cloudy](https://github.com/aklump/cloudy) installed on your system to install this package.

@@ -57,6 +57,10 @@
 
 <pre><code class="cronexp">0 1 * * * export PATH=/usr/local/php81/bin:$PATH;/var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" me@developer.com
 </code></pre></li>
+<li><p>You may have to include the FROM address using the <code>-r</code> flag like this:</p>
+
+<pre><code class="cronexp">0 1 * * * export PATH=/usr/local/php81/bin:$PATH;/var/www/mywebsite.org/app/bin/website_backup bu  2&gt;&amp;1 | mail -s "FOO backup" -r info@mywebsite.org me@developer.com
+</code></pre></li>
 </ul>
 
 <h2>Requirements</h2>
@@ -129,7 +133,7 @@
 <footer>
   <div class="pager"><a href="index.html" class="prev index">&laquo;Website Backup</a><a href="index.html" class="index pager__book-title">Website Backup</a><a href="cache_tables.html" class="next cache_tables">Cache Tables by Framework&raquo;</a></div>  
   <div id="footer-legaleeze">
-    <p class="legaleeze center">Version: 0.0.27 &bull; Last Updated: Thu, 14 Aug 2025 12:34:26 -0700</p>
+    <p class="legaleeze center">Version: 0.0.28 &bull; Last Updated: Sat, 07 Mar 2026 16:11:02 -0800</p>
   </div>
 </footer>
 
