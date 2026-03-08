@@ -1,0 +1,65 @@
+# The region for the bucket.
+aws_region: us-west-1
+
+# The name of the destination bucket
+aws_bucket: example
+
+# The AWS access key and secret key to use for the backup.
+aws_access_key_id: ${WEBSITE_BACKUP_AWS_ACCESS_KEY_ID}
+aws_secret_access_key: ${WEBSITE_BACKUP_AWS_SECRET_ACCESS_KEY}
+
+aws_retention:
+  keep_daily_for_days: 14
+  keep_monthly_for_months: 12
+
+# The filename of the backup object that will be created.  The current
+# datetime will be appended.
+object_name: example
+
+# List of file/folder paths to include in the backup, preceed a path with ! to
+# indicate the path should be excluded.  These may be absolute or relative to the
+# app root.  If you are using a database handler, the dumpfile will be added to
+# the manifest automatically for you.
+manifest:
+  - web/sites/*/files/
+  - "!web/sites/*/files/styles/"
+  - private/*/files/
+  - "!private/*/files/tmp/"
+  - web/sites/*/README.*
+
+database:
+  # Optional if ${DATABASE_URL} is being used
+  name: database
+  # Optional if ${DATABASE_URL} is being used
+  user: database_user
+  # Optional if ${DATABASE_URL} is being used
+  password: ${WEBSITE_BACKUP_DATABASE_PASSWORD}
+
+  # Define which database export handler to use; one of: loft_deploy, mysqldump.
+  handler: mysqldump
+  dumpfile: backup
+
+  # To reduce the size of your dumpfile, you can specify any number of "cache
+  # tables", or tables with ephemeral content that can be rebuilt by your
+  # application. These cache_tables will have their STRUCTURE ONLY exported and
+  # the contents of these tables will not exist in the dump file.
+  cache_tables:
+    - cache
+    - cache_*
+    - search_index
+    - node_access
+    - watchdog
+
+encryption:
+  password: ${WEBSITE_BACKUP_ENCRYPTION_PASSWORD}
+  s3: true
+
+notifications:
+  email:
+    to:
+      - ops@example.com
+      - dev@example.com
+    on_success:
+      subject: Backup succeeded
+    on_fail:
+      subject: Backup failed

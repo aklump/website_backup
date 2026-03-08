@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+use App\Command\BackupCommand;
+use App\Command\InstallCommand;
+use App\Command\HealthcheckCommand;
+use App\Command\UnpackCommand;
+
+// TODO get version from bump version
+$application = new Application('Website Backup', '');
+
+// Config and services setup will happen here later.
+
+$application->add(new BackupCommand());
+$application->add(new InstallCommand());
+$application->add(new HealthcheckCommand());
+$application->add(new UnpackCommand());
+
+$application->run();
