@@ -93,24 +93,26 @@ notifications:
       subject: Backup failed
 ```
 
-To enable notifications, use the `--notify` option with the `backup` command:
+To enable notifications, use the `--notify` option with the backup commands:
 
 ```bash
-php bin/website_backup backup --notify
+php bin/website_backup backup:s3 --notify
+# or
+php bin/website_backup backup:local --dir=/path/to/backups --notify
 ```
 
 Notifications are sent for both successful runs and failures (if configured). Email delivery failure is reported as a warning but will not cause the backup command to fail.
 
 ## Local Backups and Compression
 
-By default, local backups (using the `--local` option) are saved as directories. You can optionally compress local backups using the `--gzip` flag.
+By default, local backups are saved as directories. You can optionally compress local backups using the `--gzip` flag.
 
 ```bash
 # Save as a directory (default)
-php bin/website_backup backup --local=/path/to/backups
+php bin/website_backup backup:local --dir=/path/to/backups
 
 # Save as a .tar.gz archive
-php bin/website_backup backup --local=/path/to/backups --gzip
+php bin/website_backup backup:local --dir=/path/to/backups --gzip
 ```
 
 S3 backups are always compressed and do not support directory output.
@@ -138,11 +140,11 @@ encryption:
 Encryption is controlled by the `encryption.s3` configuration setting. If enabled, the uploaded file will have a `.tar.gz.enc` suffix.
 
 **Local Backups:**
-Encryption for local backups is opt-in via the CLI and requires both `--local` and `--gzip`.
+Encryption for local backups is opt-in via the CLI and requires `--gzip`.
 
 ```bash
 # Save as an encrypted archive
-php bin/website_backup backup --local=/path/to/backups --gzip --encrypt
+php bin/website_backup backup:local --dir=/path/to/backups --gzip --encrypt
 ```
 
 The resulting file will be named `[object_name]--[timestamp].tar.gz.enc`.

@@ -337,7 +337,7 @@ class BackupService {
       throw new \InvalidArgumentException('The ENCRYPT option requires GZIP to be set.');
     }
     if (($options & BackupOptions::LATEST) && !$is_local) {
-      throw new \InvalidArgumentException('The LATEST option may only be used with local output.');
+      throw new \InvalidArgumentException('The LATEST option may only be used with a local destination.');
     }
   }
 }

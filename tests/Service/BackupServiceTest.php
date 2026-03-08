@@ -26,7 +26,7 @@ class BackupServiceTest extends TestCase {
   public function testRunRejectsLatestWithoutLocal() {
     $service = new BackupService([], new NullOutput());
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('The LATEST option may only be used with local output.');
+    $this->expectExceptionMessage('The LATEST option may only be used with a local destination.');
     $service->run(BackupOptions::LATEST | BackupOptions::DATABASE, '');
   }
 }

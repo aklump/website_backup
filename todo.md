@@ -2,8 +2,6 @@
 
 ## Critical
 
-- token scanner in InstallCommand can be combined with... ConfigLoader?
-
 ## Normal
 
 - documentation

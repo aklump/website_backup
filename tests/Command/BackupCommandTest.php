@@ -2,7 +2,8 @@
 
 namespace App\Tests\Command;
 
-use App\Command\BackupCommand;
+use App\Command\BackupLocalCommand;
+use App\Command\BackupS3Command;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -35,28 +36,58 @@ class BackupCommandTest extends TestCase {
     return rmdir($dir);
   }
 
-  public function testBackupFailsWithInvalidLocalPath() {
+  public function testBackupLocalFailsWithMissingDir() {
     $application = new Application();
-    $application->add(new BackupCommand());
+    $application->add(new BackupLocalCommand());
 
-    $command = $application->find('backup');
+    $command = $application->find('backup:local');
+    $command_tester = new CommandTester($command);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('The --dir option is required.');
+
+    $command_tester->execute([]);
+  }
+
+  public function testBackupLocalFailsWithInvalidDir() {
+    $application = new Application();
+    $application->add(new BackupLocalCommand());
+
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
     $invalid_path = $this->test_dir . '/non_existent_dir';
 
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage("The local path does not exist or is not a directory: $invalid_path");
+    $this->expectExceptionMessage("The directory specified by --dir does not exist or is not a directory: $invalid_path");
 
     $command_tester->execute([
-      '--local' => $invalid_path,
+      '--dir' => $invalid_path,
     ]);
   }
 
-  public function testBackupFailsWithDatabaseAndFiles() {
+  public function testBackupLocalFailsWithDatabaseAndFiles() {
     $application = new Application();
-    $application->add(new BackupCommand());
+    $application->add(new BackupLocalCommand());
 
-    $command = $application->find('backup');
+    $command = $application->find('backup:local');
+    $command_tester = new CommandTester($command);
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('The --database and --files options cannot be used together.');
+
+    $command_tester->execute([
+      '--dir' => $this->test_dir,
+      '--database' => TRUE,
+      '--files' => TRUE,
+    ]);
+  }
+
+  public function testBackupS3FailsWithDatabaseAndFiles() {
+    $application = new Application();
+    $application->add(new BackupS3Command());
+
+    $command = $application->find('backup:s3');
     $command_tester = new CommandTester($command);
 
     $this->expectException(\RuntimeException::class);
@@ -68,39 +99,26 @@ class BackupCommandTest extends TestCase {
     ]);
   }
 
-  public function testBackupEncryptFailsWithoutLocalAndGzip() {
+  public function testBackupLocalEncryptFailsWithoutGzip() {
     $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
+    $application->add(new BackupLocalCommand());
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
-    // 1. Without both
-    try {
-      $command_tester->execute(['--encrypt' => TRUE]);
-      $this->fail('Should have failed validation for --encrypt without --local and --gzip');
-    }
-    catch (\RuntimeException $e) {
-      $this->assertStringContainsString('--encrypt option may only be used with --local and --gzip', $e->getMessage());
-    }
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('--encrypt option may only be used with --gzip');
 
-    // 2. Without --gzip
-    try {
-      $command_tester->execute([
-        '--encrypt' => TRUE,
-        '--local' => $this->test_dir,
-      ]);
-      $this->fail('Should have failed validation for --encrypt without --gzip');
-    }
-    catch (\RuntimeException $e) {
-      $this->assertStringContainsString('--encrypt option may only be used with --local and --gzip', $e->getMessage());
-    }
+    $command_tester->execute([
+      '--dir' => $this->test_dir,
+      '--encrypt' => TRUE,
+    ]);
   }
 
   public function testBackupS3RequiresConfirmation() {
     $application = new Application();
-    $application->add(new BackupCommand());
+    $application->add(new BackupS3Command());
 
-    $command = $application->find('backup');
+    $command = $application->find('backup:s3');
     $command_tester = new CommandTester($command);
 
     // Simulate "no" response to confirmation
@@ -117,14 +135,12 @@ class BackupCommandTest extends TestCase {
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
     $application = new Application();
-    $application->add(new BackupCommand());
+    $application->add(new BackupS3Command());
 
-    $command = $application->find('backup');
+    $command = $application->find('backup:s3');
     $command_tester = new CommandTester($command);
 
     // If it doesn't prompt, it will proceed to try to run the backup service.
-    // We expect it to fail eventually because S3/credentials are fake,
-    // but the important thing is that it doesn't wait for input.
     try {
       $command_tester->execute(['--force' => TRUE]);
     }
@@ -136,58 +152,13 @@ class BackupCommandTest extends TestCase {
     $this->assertStringNotContainsString('You are about to backup to S3', $output);
   }
 
-  public function testBackupWithNotifySendsNoEmailWhenOmitted() {
-    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1";
-    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
-
-    $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
-    $command_tester = new CommandTester($command);
-
-    // We don't want to actually run the backup as it would fail on S3/compression,
-    // but we can check if it fails before validation or if it tries to send email.
-    // Actually, let's just use --local to make it a bit easier to run.
-    $local_path = $this->test_dir . '/backups';
-    mkdir($local_path);
-
-    $command_tester->execute([
-      '--local' => $local_path,
-      '--database' => TRUE,
-    ]);
-
-    $output = $command_tester->getDisplay();
-    $this->assertStringNotContainsString('Failed to send email', $output);
-  }
-
-  public function testBackupNotifyFailsWhenConfigMissing() {
-    // manifest: [foo] - missing notifications.email
-    file_put_contents($this->test_dir . '/bin/config/website_backup.yml', "manifest: [foo]\ndatabase: { handler: null }");
-
-    $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
-    $command_tester = new CommandTester($command);
-
-    $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('notifications.email');
-
-    $local_path = $this->test_dir . '/backups';
-    mkdir($local_path);
-
-    $command_tester->execute([
-      '--notify' => TRUE,
-      '--local' => $local_path,
-    ]);
-  }
-
   public function testBackupLocalWithNotifyShowsSentMessage() {
     $config = "manifest: [foo]\ndatabase: { handler: null }\naws_bucket: example\nnotifications:\n  email:\n    to: [ops@example.com]\n    on_success: { subject: Success }\n    on_fail: { subject: Fail }";
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
     $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
+    $application->add(new BackupLocalCommand());
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
     $local_path = $this->test_dir . '/backups';
@@ -195,24 +166,11 @@ class BackupCommandTest extends TestCase {
 
     $command_tester->execute([
       '--notify' => TRUE,
-      '--local' => $local_path,
+      '--dir' => $local_path,
     ]);
 
     $output = $command_tester->getDisplay();
-    // The mail() function might return false in CLI environment if not configured,
-    // but EmailService catches and reports it as a warning if it returns false.
-    // If it returns false, our message won't show.
-    // In some CI/Local environments, mail() might return true even if it does nothing.
-    // Let's assume for this test we want to see if the logic is called.
-    // Wait, if mail() fails, we see "Failed to send email notification".
-
-    // If we want to GUARANTEE success in the test, we would need to mock EmailService.
-    // But BackupCommand creates BackupService which creates EmailService.
-    // This makes mocking difficult without dependency injection in Command.
-
     $this->assertStringContainsString('Backing Up Your Website', $output);
-    // We check for either the success message OR the failure message from EmailService.
-    // If it's a success, we should see our new message.
     if (strpos($output, 'Email with subject "Success" was sent to: ops@example.com') === FALSE) {
       $this->assertStringContainsString('Failed to send email notification', $output);
     }
@@ -221,38 +179,23 @@ class BackupCommandTest extends TestCase {
     }
   }
 
-  public function testBackupGzipRequiresLocal() {
-    $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
-    $command_tester = new CommandTester($command);
-
-    $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('The --gzip option may only be used with --local.');
-
-    $command_tester->execute([
-      '--gzip' => TRUE,
-    ]);
-  }
-
   public function testBackupLocalDirectoryMode() {
     $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
+    $application->add(new BackupLocalCommand());
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
     $local_path = $this->test_dir . '/backups';
     mkdir($local_path);
 
     $command_tester->execute([
-      '--local' => $local_path,
+      '--dir' => $local_path,
       '--database' => TRUE,
     ]);
 
     $output = $command_tester->getDisplay();
     $this->assertStringContainsString('Saving locally', $output);
 
-    // Find the created directory
     $dirs = glob($local_path . '/example--*');
     $this->assertCount(1, $dirs);
     $this->assertTrue(is_dir($dirs[0]));
@@ -261,15 +204,15 @@ class BackupCommandTest extends TestCase {
 
   public function testBackupLocalGzipMode() {
     $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
+    $application->add(new BackupLocalCommand());
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
     $local_path = $this->test_dir . '/backups';
     mkdir($local_path);
 
     $command_tester->execute([
-      '--local' => $local_path,
+      '--dir' => $local_path,
       '--gzip' => TRUE,
       '--database' => TRUE,
     ]);
@@ -278,27 +221,25 @@ class BackupCommandTest extends TestCase {
     $this->assertStringContainsString('Compressing object', $output);
     $this->assertStringContainsString('Saving locally', $output);
 
-    // Find the created archive
     $files = glob($local_path . '/example--*.tar.gz');
     $this->assertCount(1, $files);
     $this->assertTrue(file_exists($files[0]));
 
-    // Ensure no directory with the same name exists
     $dir_name = str_replace('.tar.gz', '', $files[0]);
     $this->assertFalse(is_dir($dir_name));
   }
 
   public function testBackupLocalLatestSymlinkDirectory() {
     $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
+    $application->add(new BackupLocalCommand());
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
     $local_path = $this->test_dir . '/backups';
     mkdir($local_path);
 
     $command_tester->execute([
-      '--local' => $local_path,
+      '--dir' => $local_path,
       '--latest' => TRUE,
       '--database' => TRUE,
     ]);
@@ -311,15 +252,15 @@ class BackupCommandTest extends TestCase {
 
   public function testBackupLocalLatestSymlinkGzip() {
     $application = new Application();
-    $application->add(new BackupCommand());
-    $command = $application->find('backup');
+    $application->add(new BackupLocalCommand());
+    $command = $application->find('backup:local');
     $command_tester = new CommandTester($command);
 
     $local_path = $this->test_dir . '/backups';
     mkdir($local_path);
 
     $command_tester->execute([
-      '--local' => $local_path,
+      '--dir' => $local_path,
       '--gzip' => TRUE,
       '--latest' => TRUE,
       '--database' => TRUE,

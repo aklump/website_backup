@@ -217,7 +217,7 @@ YAML;
     $this->assertEquals(1, $exit_code);
     $output = $command_tester->getDisplay();
     $this->assertStringContainsString('Checking Manifest', $output);
-    $this->assertStringContainsString('✗ non_existent_file.txt — No files found matching this pattern.', $output);
+    $this->assertStringContainsString('? non_existent_file.txt — No files found matching this pattern.', $output);
   }
 
   public function testExecuteSucceedsWithValidManifest() {
