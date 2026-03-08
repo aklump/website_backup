@@ -138,8 +138,10 @@ aws_bucket: example
 aws_access_key_id: key
 aws_secret_access_key: secret
 aws_retention:
-  keep_daily_for_days: 0
-  keep_monthly_for_months: 0
+  keep_all_for_days: 0
+  keep_latest_daily_for_days: 0
+  keep_latest_monthly_for_months: 0
+  keep_latest_yearly_for_years: 0
 database:
   url: mysql://user:pass@host/db
   handler: null
@@ -154,7 +156,7 @@ YAML;
     $command_tester->execute([]);
 
     $output = $command_tester->getDisplay();
-    $this->assertStringContainsString('Retention is set to 0 for both daily and monthly', $output);
+    $this->assertStringContainsString('All retention settings are set to 0', $output);
     $this->assertStringContainsString('This will cause the', $output);
     $this->assertStringContainsString('S3 bucket to continue to grow', $output);
   }
@@ -189,8 +191,10 @@ aws_bucket: example
 aws_access_key_id: key
 aws_secret_access_key: secret
 aws_retention:
-  keep_daily_for_days: 1
-  keep_monthly_for_months: 1
+  keep_all_for_days: 1
+  keep_latest_daily_for_days: 1
+  keep_latest_monthly_for_months: 1
+  keep_latest_yearly_for_years: 1
 database:
   url: mysql://user:pass@host/db
   handler: null
@@ -216,8 +220,10 @@ manifest: [foo]
 aws_region: us-west-1
 aws_bucket: example
 aws_retention:
-  keep_daily_for_days: 1
-  keep_monthly_for_months: 1
+  keep_all_for_days: 1
+  keep_latest_daily_for_days: 1
+  keep_latest_monthly_for_months: 1
+  keep_latest_yearly_for_years: 1
 database: { handler: null }
 YAML;
     // Note: aws_access_key_id and aws_secret_access_key are missing.
@@ -270,8 +276,10 @@ aws_bucket: example
 aws_access_key_id: key
 aws_secret_access_key: secret
 aws_retention:
-  keep_daily_for_days: 1
-  keep_monthly_for_months: 1
+  keep_all_for_days: 1
+  keep_latest_daily_for_days: 1
+  keep_latest_monthly_for_months: 1
+  keep_latest_yearly_for_years: 1
 database: { handler: null }
 YAML;
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);

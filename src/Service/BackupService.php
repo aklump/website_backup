@@ -3,6 +3,7 @@
 namespace AKlump\WebsiteBackup\Service;
 
 use AKlump\WebsiteBackup\Helper\GetShortPath;
+use AKlump\WebsiteBackup\Helper\S3LinkBuilder;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class BackupService {
@@ -44,20 +45,20 @@ class BackupService {
     $this->validateOptions($options, (bool) $local_path);
     $start_time = microtime(TRUE);
     try {
-      $this->doRun($options, $local_path);
+      $object_name = $this->doRun($options, $local_path);
       if ($options & BackupOptions::NOTIFY) {
-        $this->sendNotification(TRUE, $local_path, $options, $start_time, NULL);
+        $this->sendNotification(TRUE, $local_path, $options, $start_time, $object_name, NULL);
       }
     }
     catch (\Exception $e) {
       if ($options & BackupOptions::NOTIFY) {
-        $this->sendNotification(FALSE, $local_path, $options, $start_time, $e);
+        $this->sendNotification(FALSE, $local_path, $options, $start_time, NULL, $e);
       }
       throw $e;
     }
   }
 
-  private function doRun(int $options = 0, $local_path = ''): void {
+  private function doRun(int $options = 0, $local_path = ''): ?string {
     $this->output->writeln('<info>Backing Up Your Website</info>');
 
     $latest = (bool) ($options & BackupOptions::LATEST);
@@ -70,7 +71,6 @@ class BackupService {
     $timestamp = date('Ymd\THisO');
     $full_object_name = $object_name_base . '--' . $timestamp;
     $latest_symlink_name = $object_name_base . '--latest';
-
     $temp_work_dir = $this->tempDirectoryFactory->create();
     try {
       $staging_dir = $temp_work_dir . '/' . $full_object_name;
@@ -170,6 +170,8 @@ class BackupService {
             $final_artifact_name = $encrypted_name;
           }
 
+          $final_artifact_name_for_notify = $final_artifact_name;
+
           $destination = rtrim($local_path, '/') . '/' . $final_artifact_name;
           if (file_exists($destination)) {
             unlink($destination);
@@ -195,6 +197,7 @@ class BackupService {
             $this->processRunner->run(['rm', '-rf', $destination]);
           }
           rename($staging_dir, $destination);
+          $final_artifact_name_for_notify = $full_object_name;
           $this->output->writeln(sprintf(' <info>*</info> %s', ($this->getShortPath)($destination)));
 
           if ($latest) {
@@ -271,6 +274,8 @@ class BackupService {
         $this->output->writeln(sprintf(' <info>*</info> using key: ...%s', substr($this->config['aws_access_key_id'], -6)));
         $this->output->writeln(sprintf(' <info>*</info> object: %s', $final_artifact_name));
 
+        $final_artifact_name_for_notify = $final_artifact_name;
+
         $s3 = ($this->s3Factory)(
           $this->config['aws_region'],
           $this->config['aws_bucket'],
@@ -279,18 +284,28 @@ class BackupService {
         );
         $s3->upload($final_artifact_name, $final_artifact_path);
 
+        $s3_link_builder = new S3LinkBuilder();
+        $s3_uri = $s3_link_builder->buildS3Uri($this->config['aws_bucket'], $final_artifact_name);
+        $console_url = $s3_link_builder->buildConsoleUrl($this->config['aws_bucket'], $this->config['aws_region'], $final_artifact_name);
+
+        $this->output->writeln('<info>Upload complete.</info>');
+        $this->output->writeln(sprintf('S3 URI: %s', $s3_uri));
+        $this->output->writeln(sprintf('AWS Console: %s', $console_url));
+
         // Prune
         $s3->pruneByRetention($this->config['aws_retention']);
       }
 
       $this->output->writeln('<info>Backup completed</info>');
+
+      return $final_artifact_name_for_notify;
     }
     finally {
       $this->tempDirectoryFactory->cleanup($temp_work_dir);
     }
   }
 
-  private function sendNotification(bool $success, $local_path, int $options, float $start_time, \Exception $exception = NULL): void {
+  private function sendNotification(bool $success, $local_path, int $options, float $start_time, ?string $object_name, \Exception $exception = NULL): void {
     $email_config = $this->config['notifications']['email'];
     $subject = $success ? $email_config['on_success']['subject'] : $email_config['on_fail']['subject'];
     $elapsed = round(microtime(TRUE) - $start_time, 2);
@@ -321,6 +336,11 @@ class BackupService {
     }
     else {
       $body .= "- Bucket: " . ($this->config['aws_bucket'] ?? 'unknown') . "\n";
+      if ($success && $object_name) {
+        $s3_link_builder = new S3LinkBuilder();
+        $body .= "- S3 URI: " . $s3_link_builder->buildS3Uri($this->config['aws_bucket'], $object_name) . "\n";
+        $body .= "- AWS Console: " . $s3_link_builder->buildConsoleUrl($this->config['aws_bucket'], $this->config['aws_region'], $object_name) . "\n";
+      }
     }
 
     $body .= "- Elapsed time: " . $elapsed . " seconds\n";

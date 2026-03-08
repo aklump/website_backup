@@ -66,7 +66,7 @@ class ConfigLoaderTest extends TestCase {
   public function testUnsubstitutedDatabaseUrlThrowsException() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
     // Provide other required fields to ensure it reaches database.url validation
-    file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1\ndatabase:\n  url: \${DATABASE_URL}");
+    file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_all_for_days: 1\n  keep_latest_daily_for_days: 1\n  keep_latest_monthly_for_months: 1\n  keep_latest_yearly_for_years: 1\ndatabase:\n  url: \${DATABASE_URL}");
 
     $loader = new ConfigLoader($this->test_app_root);
     $this->expectException(\RuntimeException::class);
@@ -95,7 +95,7 @@ class ConfigLoaderTest extends TestCase {
 
   public function testMissingDatabaseUrlThrowsException() {
     $config_path = $this->test_app_root . '/bin/config/website_backup.yml';
-    file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1\ndatabase: { handler: null }");
+    file_put_contents($config_path, "manifest: [foo]\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_all_for_days: 1\n  keep_latest_daily_for_days: 1\n  keep_latest_monthly_for_months: 1\n  keep_latest_yearly_for_years: 1\ndatabase: { handler: null }");
 
     $loader = new ConfigLoader($this->test_app_root);
     $this->expectException(\RuntimeException::class);
@@ -133,8 +133,10 @@ class ConfigLoaderTest extends TestCase {
       'aws_access_key_id' => 'key',
       'aws_secret_access_key' => 'secret',
       'aws_retention' => [
-        'keep_daily_for_days' => 1,
-        'keep_monthly_for_months' => 1,
+        'keep_all_for_days' => 1,
+        'keep_latest_daily_for_days' => 1,
+        'keep_latest_monthly_for_months' => 1,
+        'keep_latest_yearly_for_years' => 1,
       ],
     ];
 
@@ -163,8 +165,10 @@ class ConfigLoaderTest extends TestCase {
       'aws_access_key_id' => 'key',
       'aws_secret_access_key' => 'secret',
       'aws_retention' => [
-        'keep_daily_for_days' => 1,
-        'keep_monthly_for_months' => 1,
+        'keep_all_for_days' => 1,
+        'keep_latest_daily_for_days' => 1,
+        'keep_latest_monthly_for_months' => 1,
+        'keep_latest_yearly_for_years' => 1,
       ],
     ];
 
@@ -230,8 +234,10 @@ class ConfigLoaderTest extends TestCase {
       'aws_access_key_id' => 'key',
       'aws_secret_access_key' => 'secret',
       'aws_retention' => [
-        'keep_daily_for_days' => 1,
-        'keep_monthly_for_months' => 1,
+        'keep_all_for_days' => 1,
+        'keep_latest_daily_for_days' => 1,
+        'keep_latest_monthly_for_months' => 1,
+        'keep_latest_yearly_for_years' => 1,
       ],
     ];
 
@@ -290,20 +296,22 @@ class ConfigLoaderTest extends TestCase {
 
     // 2. Missing key
     $config = $base_config;
-    $config['aws_retention'] = ['keep_daily_for_days' => 14];
+    $config['aws_retention'] = ['keep_latest_daily_for_days' => 14];
     try {
       $loader->validate($config);
-      $this->fail('Should have thrown exception for missing keep_monthly_for_months');
+      $this->fail('Should have thrown exception for missing keep_all_for_days');
     }
     catch (\RuntimeException $e) {
-      $this->assertStringContainsString('aws_retention.keep_monthly_for_months', $e->getMessage());
+      $this->assertStringContainsString('aws_retention.keep_all_for_days', $e->getMessage());
     }
 
     // 3. Negative value
     $config = $base_config;
     $config['aws_retention'] = [
-      'keep_daily_for_days' => -1,
-      'keep_monthly_for_months' => 12,
+      'keep_all_for_days' => -1,
+      'keep_latest_daily_for_days' => 14,
+      'keep_latest_monthly_for_months' => 12,
+      'keep_latest_yearly_for_years' => 3,
     ];
     try {
       $loader->validate($config);
@@ -316,8 +324,10 @@ class ConfigLoaderTest extends TestCase {
     // 4. Non-integer value
     $config = $base_config;
     $config['aws_retention'] = [
-      'keep_daily_for_days' => "14",
-      'keep_monthly_for_months' => 12,
+      'keep_all_for_days' => "14",
+      'keep_latest_daily_for_days' => 14,
+      'keep_latest_monthly_for_months' => 12,
+      'keep_latest_yearly_for_years' => 3,
     ];
     try {
       $loader->validate($config);
@@ -330,8 +340,10 @@ class ConfigLoaderTest extends TestCase {
     // 5. Both zero is now permitted, but should be warned elsewhere.
     $config = $base_config;
     $config['aws_retention'] = [
-      'keep_daily_for_days' => 0,
-      'keep_monthly_for_months' => 0,
+      'keep_all_for_days' => 0,
+      'keep_latest_daily_for_days' => 0,
+      'keep_latest_monthly_for_months' => 0,
+      'keep_latest_yearly_for_years' => 0,
     ];
     $loader->validate($config);
     $this->assertTrue(TRUE);
@@ -339,8 +351,10 @@ class ConfigLoaderTest extends TestCase {
     // 6. Valid
     $config = $base_config;
     $config['aws_retention'] = [
-      'keep_daily_for_days' => 14,
-      'keep_monthly_for_months' => 12,
+      'keep_all_for_days' => 2,
+      'keep_latest_daily_for_days' => 14,
+      'keep_latest_monthly_for_months' => 12,
+      'keep_latest_yearly_for_years' => 3,
     ];
     $loader->validate($config);
     $this->assertTrue(TRUE);

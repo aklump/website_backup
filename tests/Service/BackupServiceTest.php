@@ -24,6 +24,7 @@ use Symfony\Component\Process\Process;
  * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
  * @uses \AKlump\WebsiteBackup\Service\ManifestService
  * @uses \AKlump\WebsiteBackup\Service\S3Service
+ * @uses \AKlump\WebsiteBackup\Helper\S3LinkBuilder
  */
 class BackupServiceTest extends TestCase {
 
@@ -137,8 +138,10 @@ class BackupServiceTest extends TestCase {
       'aws_access_key_id' => 'key',
       'aws_secret_access_key' => 'secret',
       'aws_retention' => [
-        'keep_daily_for_days' => 1,
-        'keep_monthly_for_months' => 1,
+        'keep_all_for_days' => 1,
+        'keep_latest_daily_for_days' => 1,
+        'keep_latest_monthly_for_months' => 1,
+        'keep_latest_yearly_for_years' => 1,
       ],
     ];
     $output = new BufferedOutput();
@@ -266,4 +269,77 @@ class BackupServiceTest extends TestCase {
 
     $this->assertStringContainsString('Email with subject "Success" was sent', $output->fetch());
   }
+
+  public function testRunS3BackupPrintsLinks() {
+    $config = [
+      'path_to_app' => $this->test_app_root,
+      'manifest' => ['file.txt'],
+      'database' => ['handler' => null],
+      'aws_region' => 'us-east-1',
+      'aws_bucket' => 'my-test-bucket',
+      'aws_access_key_id' => 'key',
+      'aws_secret_access_key' => 'secret',
+      'aws_retention' => [
+        'keep_all_for_days' => 1,
+        'keep_latest_daily_for_days' => 1,
+        'keep_latest_monthly_for_months' => 1,
+        'keep_latest_yearly_for_years' => 1,
+      ],
+    ];
+    $output = new BufferedOutput();
+    $service = new BackupService($config, $output);
+
+    $mockS3 = $this->createMock(S3Service::class);
+    $mockS3->expects($this->once())->method('upload');
+    $service->setS3Factory(function() use ($mockS3) { return $mockS3; });
+
+    $service->run(BackupOptions::FILES, '');
+
+    $display = $output->fetch();
+    $this->assertStringContainsString('Upload complete.', $display);
+    $this->assertStringContainsString('S3 URI: s3://my-test-bucket/my-test-bucket--', $display);
+    $this->assertStringContainsString('AWS Console: https://s3.console.aws.amazon.com/s3/buckets/my-test-bucket?region=us-east-1', $display);
+  }
+
+  public function testSendNotificationIncludesS3Links() {
+    $config = [
+      'path_to_app' => $this->test_app_root,
+      'manifest' => ['file.txt'],
+      'database' => ['handler' => null],
+      'aws_region' => 'us-west-2',
+      'aws_bucket' => 'notify-bucket',
+      'notifications' => [
+        'email' => [
+          'to' => ['dev@example.com'],
+          'on_success' => ['subject' => 'Backup OK'],
+          'on_fail' => ['subject' => 'Backup Failed'],
+        ],
+      ],
+    ];
+    $output = new BufferedOutput();
+    $service = new BackupService($config, $output);
+
+    $mockEmail = $this->createMock(EmailService::class);
+    $mockEmail->expects($this->once())
+      ->method('send')
+      ->with(
+        $this->anything(),
+        $this->anything(),
+        $this->callback(function($body) {
+          return strpos($body, 'S3 URI: s3://notify-bucket/') !== FALSE
+            && strpos($body, 'AWS Console: https://s3.console.aws.amazon.com/s3/buckets/notify-bucket?region=us-west-2') !== FALSE;
+        })
+      )
+      ->willReturn(TRUE);
+
+    $reflection = new \ReflectionClass($service);
+    $prop = $reflection->getProperty('emailService');
+    $prop->setAccessible(TRUE);
+    $prop->setValue($service, $mockEmail);
+
+    $method = $reflection->getMethod('sendNotification');
+    $method->setAccessible(TRUE);
+    $method->invoke($service, TRUE, '', BackupOptions::FILES, microtime(TRUE), 'notify-bucket--timestamp.tar.gz');
+  }
+
 }

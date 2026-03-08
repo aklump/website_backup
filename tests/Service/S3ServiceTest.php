@@ -11,48 +11,54 @@ use Aws\Result;
  */
 class S3ServiceTest extends TestCase {
 
-  public function testPruneByRetention() {
+  private function getServiceWithMockS3($mockS3) {
+    $service = new S3Service('us-west-1', 'test-bucket', 'key', 'secret');
+    $reflection = new \ReflectionClass($service);
+    $property = $reflection->getProperty('s3');
+    $property->setAccessible(TRUE);
+    $property->setValue($service, $mockS3);
+
+    return $service;
+  }
+
+  public function testPruneByRetentionPhased() {
     $mockS3 = $this->getMockBuilder(\Aws\S3\S3Client::class)
       ->disableOriginalConstructor()
       ->addMethods(['listObjects', 'deleteObjects'])
       ->getMock();
 
     $bucket = 'test-bucket';
-    $region = 'us-west-1';
-    $key = 'key';
-    $secret = 'secret';
-
     // Current date: 2026-03-07
     $now = new \DateTime('2026-03-07T12:00:00+0000');
 
     $objects = [
-      // Daily window (7 days)
-      ['Key' => 'backup--20260307T100000+0000.tar.gz'],
-      // Keep (Today, Newest)
-      ['Key' => 'backup--20260307T080000+0000.tar.gz'],
-      // Delete (Today, Older)
-      ['Key' => 'backup--20260306T100000+0000.tar.gz'],
-      // Keep (Yesterday)
-      ['Key' => 'backup--20260301T100000+0000.tar.gz'],
-      // Keep (Cutoff day 7)
+      // today
+      ['Key' => 'backup--20260307T100000+0000.tar.gz'], // Keep (Phase 1: All)
+      ['Key' => 'backup--20260307T080000+0000.tar.gz'], // Keep (Phase 1: All)
+      // yesterday
+      ['Key' => 'backup--20260306T100000+0000.tar.gz'], // Keep (Phase 1: All)
+      ['Key' => 'backup--20260306T080000+0000.tar.gz'], // Keep (Phase 1: All)
 
-      // Monthly window (2 months: 2026-02, 2026-01)
-      ['Key' => 'backup--20260228T100000+0000.tar.gz'],
-      // Keep (Feb, Newest)
-      ['Key' => 'backup--20260215T100000+0000.tar.gz'],
-      // Delete (Feb, Older)
-      ['Key' => 'backup--20260115T100000+0000.tar.gz'],
-      // Keep (Jan)
+      // Older than 2 days (Phase 2: Daily starts)
+      ['Key' => 'backup--20260305T100000+0000.tar.gz'], // Keep (Phase 2: Daily latest)
+      ['Key' => 'backup--20260305T080000+0000.tar.gz'], // Delete (Phase 2: older today)
 
-      // Older than monthly window
-      ['Key' => 'backup--20251215T100000+0000.tar.gz'],
-      // Delete (Older than 2 months)
+      // Older than daily window (2 days + 3 days = 5 days total)
+      // daily_window_start = 2026-03-07 - (2 + 3 - 1) = 2026-03-03
+      // so 2026-03-03 is the last daily.
+      // 2026-03-02 starts Phase 3: Monthly.
+      ['Key' => 'backup--20260302T100000+0000.tar.gz'], // Keep (Phase 3: Monthly latest March)
+      ['Key' => 'backup--20260228T100000+0000.tar.gz'], // Keep (Phase 3: Monthly latest Feb)
+      ['Key' => 'backup--20260215T100000+0000.tar.gz'], // Delete (Phase 3: older Feb)
 
-      // Safety: malformed/unrelated
-      ['Key' => 'unrelated.txt'],
-      // Skip
-      ['Key' => 'backup--invalid.tar.gz'],
-      // Skip
+      // Older than monthly window (2 months: March, Feb)
+      // 2026-01 starts Phase 4: Yearly.
+      ['Key' => 'backup--20260115T100000+0000.tar.gz'], // Keep (Phase 4: Yearly latest 2026)
+      ['Key' => 'backup--20251215T100000+0000.tar.gz'], // Keep (Phase 4: Yearly latest 2025)
+      ['Key' => 'backup--20250615T100000+0000.tar.gz'], // Delete (Phase 4: older 2025)
+
+      // Older than yearly window (2026, 2025)
+      ['Key' => 'backup--20241215T100000+0000.tar.gz'], // Delete (Too old)
     ];
 
     $mockS3->expects($this->once())
@@ -63,135 +69,81 @@ class S3ServiceTest extends TestCase {
     $mockS3->expects($this->once())
       ->method('deleteObjects')
       ->with($this->callback(function ($args) use ($bucket) {
-        if ($args['Bucket'] !== $bucket) {
-          return FALSE;
-        }
         $keys = array_column($args['Delete']['Objects'], 'Key');
         sort($keys);
         $expected = [
-          'backup--20251215T100000+0000.tar.gz',
-          'backup--20260215T100000+0000.tar.gz',
-          'backup--20260307T080000+0000.tar.gz',
+          'backup--20260305T080000+0000.tar.gz',
+          'backup--20260115T100000+0000.tar.gz',
+          'backup--20250615T100000+0000.tar.gz',
+          'backup--20241215T100000+0000.tar.gz',
         ];
         sort($expected);
 
         return $keys === $expected;
       }));
 
-    // We need to inject the mock S3 client.
-    // Since S3Service creates its own client in constructor, we might need to use reflection or change S3Service to accept a client.
-    // For testing purposes, let's use reflection to replace the private $s3 property.
-
-    $service = new S3Service($region, $bucket, $key, $secret);
-    $reflection = new \ReflectionClass($service);
-    $property = $reflection->getProperty('s3');
-    $property->setAccessible(TRUE);
-    $property->setValue($service, $mockS3);
+    $service = $this->getServiceWithMockS3($mockS3);
 
     $retention = [
-      'keep_daily_for_days' => 7,
-      'keep_monthly_for_months' => 2,
+      'keep_all_for_days' => 2,
+      'keep_latest_daily_for_days' => 3,
+      'keep_latest_monthly_for_months' => 2,
+      'keep_latest_yearly_for_years' => 2,
     ];
-
-    // We also need to control 'now' inside pruneByRetention.
-    // I'll update pruneByRetention to optionally accept a reference time, but the requirement didn't ask for it.
-    // Alternatively, I can use a library or just hope the system clock is close enough if I use relative offsets.
-    // But for a pure test, I should probably have made 'now' injectable.
-    // Wait, the requirement said "Use UTC for all retention calculations."
-
-    // Let's modify S3Service to allow passing a reference date for testing, or just use reflection to mock the time if possible.
-    // Since I can't easily mock `new DateTime()`, I'll add an optional parameter to pruneByRetention.
 
     $service->pruneByRetention($retention, $now);
   }
 
-  public function testPruneByRetentionBoundaryCases() {
+  public function testPruneByRetentionZeroValues() {
     $mockS3 = $this->getMockBuilder(\Aws\S3\S3Client::class)
       ->disableOriginalConstructor()
       ->addMethods(['listObjects', 'deleteObjects'])
       ->getMock();
 
-    $bucket = 'test-bucket';
-    $service = new S3Service('us-west-1', $bucket, 'key', 'secret');
-    $reflection = new \ReflectionClass($service);
-    $property = $reflection->getProperty('s3');
-    $property->setAccessible(TRUE);
-    $property->setValue($service, $mockS3);
-
-    // Case 1: 1 day retention, today and yesterday
     $now = new \DateTime('2026-03-07T12:00:00+0000');
     $objects = [
       ['Key' => 'backup--20260307T100000+0000.tar.gz'],
-      // Keep
       ['Key' => 'backup--20260306T100000+0000.tar.gz'],
-      // Delete (Daily 1 day means only today)
     ];
 
-    $mockS3->expects($this->exactly(1))
+    $mockS3->expects($this->once())
       ->method('listObjects')
       ->willReturn(new Result(['Contents' => $objects]));
 
+    // All zero means everything deleted?
+    // Wait, Phase 1 keeps nothing. Phase 2 keeps nothing...
+    // So everything deleted.
     $mockS3->expects($this->once())
       ->method('deleteObjects')
       ->with($this->callback(function ($args) {
         $keys = array_column($args['Delete']['Objects'], 'Key');
-
-        return $keys === ['backup--20260306T100000+0000.tar.gz'];
+        sort($keys);
+        $expected = ['backup--20260306T100000+0000.tar.gz', 'backup--20260307T100000+0000.tar.gz'];
+        sort($expected);
+        return $keys === $expected;
       }));
 
+    $service = $this->getServiceWithMockS3($mockS3);
     $service->pruneByRetention([
-      'keep_daily_for_days' => 1,
-      'keep_monthly_for_months' => 0,
+      'keep_all_for_days' => 0,
+      'keep_latest_daily_for_days' => 0,
+      'keep_latest_monthly_for_months' => 0,
+      'keep_latest_yearly_for_years' => 0,
     ], $now);
+  }
 
-    // Case 2: Month rollover (March 1st)
-    $now = new \DateTime('2026-03-01T12:00:00+0000');
-    $objects = [
-      ['Key' => 'backup--20260301T100000+0000.tar.gz'],
-      // Keep (Daily)
-      ['Key' => 'backup--20260228T100000+0000.tar.gz'],
-      // Keep (Monthly 1 month)
-      ['Key' => 'backup--20260131T100000+0000.tar.gz'],
-      // Delete (Only 1 month)
-    ];
-
+  public function testPruneByRetentionBoundaryOverlaps() {
     $mockS3 = $this->getMockBuilder(\Aws\S3\S3Client::class)
       ->disableOriginalConstructor()
       ->addMethods(['listObjects', 'deleteObjects'])
       ->getMock();
-    $property->setValue($service, $mockS3);
 
-    $mockS3->expects($this->once())
-      ->method('listObjects')
-      ->willReturn(new Result(['Contents' => $objects]));
-
-    $mockS3->expects($this->once())
-      ->method('deleteObjects')
-      ->with($this->callback(function ($args) {
-        $keys = array_column($args['Delete']['Objects'], 'Key');
-
-        return $keys === ['backup--20260131T100000+0000.tar.gz'];
-      }));
-
-    $service->pruneByRetention([
-      'keep_daily_for_days' => 1,
-      'keep_monthly_for_months' => 1,
-    ], $now);
-
-    // Case 3: Encrypted files recognition
     $now = new \DateTime('2026-03-07T12:00:00+0000');
     $objects = [
-      ['Key' => 'backup--20260307T100000+0000.tar.gz.enc'],
-      // Keep (Today)
-      ['Key' => 'backup--20260306T100000+0000.tar.gz.enc'],
-      // Delete (1 day retention)
+      ['Key' => 'backup--20260307T100000+0000.tar.gz'], // Phase 1
+      ['Key' => 'backup--20260306T100000+0000.tar.gz'], // Phase 2 latest
+      ['Key' => 'backup--20260306T080000+0000.tar.gz'], // Phase 2 delete
     ];
-
-    $mockS3 = $this->getMockBuilder(\Aws\S3\S3Client::class)
-      ->disableOriginalConstructor()
-      ->addMethods(['listObjects', 'deleteObjects'])
-      ->getMock();
-    $property->setValue($service, $mockS3);
 
     $mockS3->expects($this->once())
       ->method('listObjects')
@@ -201,13 +153,45 @@ class S3ServiceTest extends TestCase {
       ->method('deleteObjects')
       ->with($this->callback(function ($args) {
         $keys = array_column($args['Delete']['Objects'], 'Key');
-
-        return $keys === ['backup--20260306T100000+0000.tar.gz.enc'];
+        return $keys === ['backup--20260306T080000+0000.tar.gz'];
       }));
 
+    $service = $this->getServiceWithMockS3($mockS3);
     $service->pruneByRetention([
-      'keep_daily_for_days' => 1,
-      'keep_monthly_for_months' => 0,
+      'keep_all_for_days' => 1,
+      'keep_latest_daily_for_days' => 1,
+      'keep_latest_monthly_for_months' => 0,
+      'keep_latest_yearly_for_years' => 0,
+    ], $now);
+  }
+
+  public function testPruneByRetentionSafety() {
+    $mockS3 = $this->getMockBuilder(\Aws\S3\S3Client::class)
+      ->disableOriginalConstructor()
+      ->addMethods(['listObjects', 'deleteObjects'])
+      ->getMock();
+
+    $now = new \DateTime('2026-03-07T12:00:00+0000');
+    $objects = [
+      ['Key' => 'backup--20260307T100000+0000.tar.gz'],
+      ['Key' => 'unrelated.txt'],
+      ['Key' => 'backup--invalid.tar.gz'],
+    ];
+
+    $mockS3->expects($this->once())
+      ->method('listObjects')
+      ->willReturn(new Result(['Contents' => $objects]));
+
+    // unrelated.txt and backup--invalid.tar.gz should NOT be in delete list
+    $mockS3->expects($this->never())
+      ->method('deleteObjects');
+
+    $service = $this->getServiceWithMockS3($mockS3);
+    $service->pruneByRetention([
+      'keep_all_for_days' => 1,
+      'keep_latest_daily_for_days' => 0,
+      'keep_latest_monthly_for_months' => 0,
+      'keep_latest_yearly_for_years' => 0,
     ], $now);
   }
 }

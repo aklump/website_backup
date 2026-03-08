@@ -165,7 +165,13 @@ class ConfigLoader {
       if (!is_array($retention)) {
         throw new \RuntimeException(sprintf('Configuration "aws_retention" must be an array in %s', $get_short_path($config_path)));
       }
-      foreach (['keep_daily_for_days', 'keep_monthly_for_months'] as $key) {
+      $retention_keys = [
+        'keep_all_for_days',
+        'keep_latest_daily_for_days',
+        'keep_latest_monthly_for_months',
+        'keep_latest_yearly_for_years',
+      ];
+      foreach ($retention_keys as $key) {
         if (!isset($retention[$key])) {
           throw new \RuntimeException(sprintf('Missing required configuration in %s: aws_retention.%s', $get_short_path($config_path), $key));
         }

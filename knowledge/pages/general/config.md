@@ -39,15 +39,20 @@ In `bin/config/website_backup.yml`:
 
 ```yaml
 aws_retention:
-  keep_daily_for_days: 14
-  keep_monthly_for_months: 12
+  keep_all_for_days: 2
+  keep_latest_daily_for_days: 14
+  keep_latest_monthly_for_months: 12
+  keep_latest_yearly_for_years: 3
 ```
 
 ### Retention Rules
 
-- **Daily Retention:** Keeps the newest backup for each of the last N calendar days (UTC).
-- **Monthly Retention:** For backups older than the daily window, keeps the newest backup for each of the last N calendar months (UTC).
-- **Overlap:** Daily retention takes precedence. If a backup is kept by the daily rule, it isn't considered for the monthly rule.
+- **Keep All:** (`keep_all_for_days`) Keeps every backup for the most recent N days. This is useful for preserving multiple backups taken on the same day during active development or maintenance.
+- **Daily Retention:** (`keep_latest_daily_for_days`) After the "Keep All" window, keeps only the newest backup for each day for N additional days.
+- **Monthly Retention:** (`keep_latest_monthly_for_months`) After the daily window, keeps only the newest backup for each month for N additional months.
+- **Yearly Retention:** (`keep_latest_yearly_for_years`) After the monthly window, keeps only the newest backup for each year for N additional years.
+- **Phased Model:** Each rule applies only to backups not already retained by an earlier rule. Backups "age" through these phases.
+- **Time Basis:** All calculations use UTC and calendar-based buckets (days, months, years).
 - **Safety:** Only objects matching the app's backup naming pattern are pruned. Unrelated or unparseable objects are ignored.
 
 ## Environment Variables and `.env`

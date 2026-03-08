@@ -211,7 +211,7 @@ class BackupCommandTest extends TestCase {
   }
 
   public function testBackupS3WithForceBypassesConfirmation() {
-    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_daily_for_days: 1\n  keep_monthly_for_months: 1";
+    $config = "manifest: [foo]\ndatabase: { handler: null }\naws_region: us-east-1\naws_bucket: bucket\naws_access_key_id: key\naws_secret_access_key: secret\naws_retention:\n  keep_all_for_days: 1\n  keep_latest_daily_for_days: 1\n  keep_latest_monthly_for_months: 1\n  keep_latest_yearly_for_years: 1";
     file_put_contents($this->test_dir . '/bin/config/website_backup.yml', $config);
 
     $application = new Application();

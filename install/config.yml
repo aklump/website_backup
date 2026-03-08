@@ -9,8 +9,14 @@ aws_access_key_id: ${WEBSITE_BACKUP_AWS_ACCESS_KEY_ID}
 aws_secret_access_key: ${WEBSITE_BACKUP_AWS_SECRET_ACCESS_KEY}
 
 aws_retention:
-  keep_daily_for_days: 14
-  keep_monthly_for_months: 12
+  # Keep every backup for the first N days.
+  keep_all_for_days: 2
+  # After the above window, keep the latest backup of each day for N additional days.
+  keep_latest_daily_for_days: 14
+  # After the daily window, keep the latest backup of each month for N additional months.
+  keep_latest_monthly_for_months: 12
+  # After the monthly window, keep the latest backup of each year for N additional years.
+  keep_latest_yearly_for_years: 3
 
 # The filename of the backup object that will be created.  The current
 # datetime will be appended.

@@ -49,9 +49,16 @@ class HealthcheckCommand extends Command {
 
       // Check for zero retention
       $retention = $config['aws_retention'] ?? [];
-      if (isset($retention['keep_daily_for_days']) && isset($retention['keep_monthly_for_months'])) {
-        if ($retention['keep_daily_for_days'] === 0 && $retention['keep_monthly_for_months'] === 0) {
-          $output->writeln(' <comment>!</comment> Retention is set to 0 for both daily and monthly. This will cause the S3 bucket to continue to grow in size as no backups will ever be pruned.');
+      if ($retention) {
+        $all_zero = TRUE;
+        foreach (['keep_all_for_days', 'keep_latest_daily_for_days', 'keep_latest_monthly_for_months', 'keep_latest_yearly_for_years'] as $key) {
+          if (!empty($retention[$key])) {
+            $all_zero = FALSE;
+            break;
+          }
+        }
+        if ($all_zero) {
+          $output->writeln(' <comment>!</comment> All retention settings are set to 0. This will cause the S3 bucket to continue to grow in size as no backups will ever be pruned.');
         }
       }
     } catch (\Exception $e) {
