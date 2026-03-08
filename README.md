@@ -31,7 +31,7 @@ The tool is designed for repeatable CLI use with configuration in YAML and secre
 1. Require this package:
    
     ```
-    composer require aklump/website-backup:^0.0
+    composer require aklump/website-backup:^0.1
     ```
 
 ## Quick Start
@@ -64,9 +64,17 @@ The tool is designed for repeatable CLI use with configuration in YAML and secre
    vendor/bin/website_backup backup:s3
    ```
 
+## S3 Bucket Requirements
+
+The backup process requires a **dedicated S3 bucket**.
+
+**DO NOT SHARE THE BUCKET** with other applications or unrelated data.
+
+The retention and pruning logic assumes full ownership of the bucket's content matching the backup pattern. Sharing the bucket can lead to unintended pruning behavior, performance issues, or operator confusion.
+
 ## Setting Up S3
 
-1. [Create a private S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/GetStartedWithS3.html) for backups.
+1. [Create a private, dedicated S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/GetStartedWithS3.html) for backups.
 2. Create a dedicated IAM user with access to that bucket only.
 3. Add your bucket settings to `bin/config/website_backup.yml`.
 4. Add your AWS credentials to `.env`.
