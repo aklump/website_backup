@@ -19,7 +19,7 @@ class HealthcheckCommand extends Command {
   protected function configure(): void {
     $this
       ->setDescription('Performs a health check of the application and configuration.')
-      ->setAliases(['hc', 'st']);
+      ->setAliases(['hc']);
   }
 
   protected function execute(InputInterface $input, OutputInterface $output): int {

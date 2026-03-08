@@ -11,7 +11,7 @@ use App\Command\HealthcheckCommand;
 use App\Command\UnpackCommand;
 
 $application = new Application('Website Backup');
-$application->setVersion('0.0.1');
+$application->setVersion('0.0.28');
 
 // Config and services setup will happen here later.
 
