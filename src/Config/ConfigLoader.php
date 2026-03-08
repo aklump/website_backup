@@ -22,7 +22,7 @@ class ConfigLoader {
     $this->envPath = $env_path;
   }
 
-  private function getConfigPath(): string {
+  public function getConfigPath(): string {
     $path = $this->configPath ?? ($this->appRoot . '/bin/config/website_backup.yml');
     if (file_exists($path)) {
       return $path;
@@ -37,7 +37,7 @@ class ConfigLoader {
     return $path;
   }
 
-  private function getEnvPath(): string {
+  public function getEnvPath(): string {
     return $this->envPath ?? ($this->appRoot . '/.env');
   }
 

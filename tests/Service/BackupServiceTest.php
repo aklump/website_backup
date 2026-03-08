@@ -79,6 +79,7 @@ class BackupServiceTest extends TestCase {
       'manifest' => ['${PROJECT_ROOT}/file.txt'],
       'database' => ['handler' => null],
       'object_name' => 'test_backup',
+      'aws_bucket' => 'example',
     ];
     $output = new BufferedOutput();
     $service = new BackupService($config, $output);

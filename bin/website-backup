@@ -27,6 +27,7 @@ use AKlump\WebsiteBackup\Command\BackupS3Command;
 use AKlump\WebsiteBackup\Command\InstallCommand;
 use AKlump\WebsiteBackup\Command\HealthcheckCommand;
 use AKlump\WebsiteBackup\Command\UnpackCommand;
+use AKlump\WebsiteBackup\Command\GenerateCrontabCommand;
 
 $application = new Application('Website Backup');
 $application->setVersion('0.1.0');
@@ -43,5 +44,6 @@ $application->add(new BackupS3Command());
 $application->add(new InstallCommand());
 $application->add(new HealthcheckCommand());
 $application->add(new UnpackCommand());
+$application->add(new GenerateCrontabCommand());
 
 $application->run();
