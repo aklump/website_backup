@@ -1,6 +1,13 @@
 #mermaid:
 #  width: 1000
-#composer: {}
-#image:
-#  max_width: 830
-#  pixel_density: 2
+composer: {}
+image:
+  max_width: 830
+  pixel_density: 2
+funding:
+  channels:
+    github: [ aklump ]
+    buy_me_a_coffee: aklump
+    paypal: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4E5KZHDQCEUV8&item_name=Open%20Source%20Sponsorship
+    custom:
+      - https://donate.website.com/?id=123
