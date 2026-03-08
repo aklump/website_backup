@@ -117,6 +117,29 @@ WEBSITE_BACKUP_AWS_ACCESS_KEY_ID=your-access-key
 WEBSITE_BACKUP_AWS_SECRET_ACCESS_KEY=your-secret-key
 ```
 
+## Setting Up Cron
+
+Once installed and deployed and you've manually tested you should configure the crontab for automated backups.
+
+1. Log in to the server where backups should run.
+2. From the project root, generate the crontab entry using:
+
+```shell script
+vendor/bin/website-backup generate:crontab
+```
+
+3. Add the generated command to your crontab:
+
+```shell script
+crontab -e
+```
+
+Example:
+
+```
+0 1 * * * TMPDIR="/path/to/tmp" PATH="/path/to/php/bin:$PATH" /path/to/project/vendor/bin/website-backup --config /path/to/project/bin/config/website_backup.yml --env-file /path/to/project/.env backup:s3 -f --notify --quiet
+```
+
 ## Support My Open Source Work
 
 If you’ve found this project useful, please consider supporting its ongoing maintenance. Even a small contribution helps fund updates, fixes, and new ideas.
