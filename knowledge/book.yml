@@ -1,3 +1,11 @@
 title: Book
-uuid: ''
-chapters: []
+uuid: e0bb6d63-c298-4682-950f-1a7dc06f69bb
+chapters:
+  -
+    id: general
+    title: General
+    pages:
+      - changelog
+      - readme
+      - config
+      - s3

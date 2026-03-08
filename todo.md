@@ -2,7 +2,6 @@
 
 ## Critical
 
-- set version in bin/wb
 - token scanner in InstallCommand can be combined with... ConfigLoader?
 
 ## Normal

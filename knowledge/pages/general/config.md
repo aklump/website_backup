@@ -1,3 +1,8 @@
+<!--
+id: config
+tags: ''
+-->
+
 # Configuration
 
 The configuration system manages settings for the backup process, combining a YAML configuration file with environment variables.
