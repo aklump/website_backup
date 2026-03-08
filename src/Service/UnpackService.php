@@ -2,6 +2,7 @@
 
 namespace AKlump\WebsiteBackup\Service;
 
+use AKlump\WebsiteBackup\Helper\RemoveDirectoryTree;
 use AKlump\WebsiteBackup\Helper\GetShortPath;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -61,7 +62,7 @@ class UnpackService {
       if (!$force) {
         throw new \RuntimeException(sprintf('Destination directory already exists: %s', ($this->getShortPath)($dest_path)));
       }
-      $this->fs->remove($dest_path);
+      (new RemoveDirectoryTree())($dest_path);
     }
 
     $this->validateDependencies($is_encrypted);

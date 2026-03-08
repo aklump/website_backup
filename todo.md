@@ -4,6 +4,10 @@
 
 ## Normal
 
+- document how to cronjob this
+
+vendor/bin/website-backup --config bin/config/wbackup backup:s3 -f
+
 ## Backlog
 
 - do we need ldp dump handler anymore? database.handler

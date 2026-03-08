@@ -2,6 +2,9 @@
 
 namespace AKlump\WebsiteBackup\Service;
 
+use AKlump\WebsiteBackup\Helper\AssertSafeBackupArtifactPath;
+use AKlump\WebsiteBackup\Helper\RemoveDirectoryTree;
+use AKlump\WebsiteBackup\Helper\RemoveFileOrSymlink;
 use AKlump\WebsiteBackup\Helper\GetShortPath;
 use AKlump\WebsiteBackup\Helper\S3LinkBuilder;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -175,8 +178,8 @@ class BackupService {
           $final_artifact_name_for_notify = $final_artifact_name;
 
           $destination = rtrim($local_path, '/') . '/' . $final_artifact_name;
-          if (file_exists($destination)) {
-            unlink($destination);
+          if (file_exists($destination) || is_link($destination)) {
+            (new RemoveFileOrSymlink())($destination);
           }
           rename($final_artifact_path, $destination);
           $this->output->writeln(sprintf(' <info>*</info> %s', ($this->getShortPath)($destination)));
@@ -184,9 +187,7 @@ class BackupService {
           if ($latest) {
             $this->output->writeln(' <info>*</info> latest symlink created.');
             $symlink_path = rtrim($local_path, '/') . '/' . $latest_symlink_name . ($encrypt ? '.tar.gz.enc' : '.tar.gz');
-            if (file_exists($symlink_path) || is_link($symlink_path)) {
-              $this->processRunner->run(['rm', '-rf', $symlink_path]);
-            }
+            (new RemoveFileOrSymlink())($symlink_path);
             $cwd = getcwd();
             chdir($local_path);
             symlink($final_artifact_name, basename($symlink_path));
@@ -196,7 +197,8 @@ class BackupService {
         else {
           $destination = rtrim($local_path, '/') . '/' . $full_object_name;
           if (is_dir($destination)) {
-            $this->processRunner->run(['rm', '-rf', $destination]);
+            (new AssertSafeBackupArtifactPath())($destination, $local_path, $object_name_base);
+            (new RemoveDirectoryTree())($destination);
           }
           rename($staging_dir, $destination);
           $final_artifact_name_for_notify = $full_object_name;
@@ -205,9 +207,7 @@ class BackupService {
           if ($latest) {
             $this->output->writeln(' <info>*</info> latest symlink created.');
             $symlink_path = rtrim($local_path, '/') . '/' . $latest_symlink_name;
-            if (file_exists($symlink_path) || is_link($symlink_path)) {
-              $this->processRunner->run(['rm', '-rf', $symlink_path]);
-            }
+            (new RemoveFileOrSymlink())($symlink_path);
             $cwd = getcwd();
             chdir($local_path);
             symlink($full_object_name, $latest_symlink_name);
