@@ -76,6 +76,14 @@ class GenerateCrontabCommand extends Command {
     $io->newLine();
     $io->note('Copy the line above adjusting the interval as desired, and paste it into your crontab (crontab -e).');
 
+    $io->section('Troubleshooting');
+    $log_file = $this->handleUserHome(rtrim($tmpdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'website-backup-cron.log');
+    $log_command = $command . ' >> "' . $this->escapeForDoubleQuotes($this->handleUserHome($log_file)) . '" 2>&1';
+    $io->note(sprintf('For cron troubleshooting, use the line below instead; it will write output to a log file. After you resolve the issue, switch back to the line above and delete "%s".', $log_file));
+
+    $io->writeln(trim($log_command));
+    $io->newLine();
+
     return Command::SUCCESS;
   }
 

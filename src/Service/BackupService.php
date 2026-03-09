@@ -370,10 +370,11 @@ class BackupService {
       $body .= "- Artifact size: " . $this->formatBytes($artifact_size_bytes) . "\n";
     }
     $body .= "- Options used:\n";
-    $body .= "  - Database: " . ($has_database ? 'Yes' : 'No') . "\n";
-    $body .= "  - Files: " . ($has_files ? 'Yes' : 'No') . "\n";
+    // Tabs used because email clients don't render spaced-indents consistently.
+    $body .= "\t* Database: " . ($has_database ? 'Yes' : 'No') . "\n";
+    $body .= "\t* Files: " . ($has_files ? 'Yes' : 'No') . "\n";
     if ($local_path) {
-      $body .= "  - Latest symlink: " . ($latest ? 'Yes' : 'No') . "\n";
+      $body .= "\t* Latest symlink: " . ($latest ? 'Yes' : 'No') . "\n";
     }
 
     if ($this->emailService->send($email_config['to'], $subject, $body)) {

@@ -9,8 +9,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 /**
  * @covers \AKlump\WebsiteBackup\Command\GenerateCrontabCommand
- * @uses \AKlump\WebsiteBackup\Helper\GetInstalledInRoot
- * @uses \AKlump\WebsiteBackup\Config\ConfigLoader
+ * @uses   \AKlump\WebsiteBackup\Helper\GetInstalledInRoot
+ * @uses   \AKlump\WebsiteBackup\Config\ConfigLoader
  */
 class GenerateCrontabCommandTest extends TestCase {
 
@@ -64,6 +64,8 @@ class GenerateCrontabCommandTest extends TestCase {
     $this->assertStringContainsString('--config "' . $expected_project_root . 'bin/config/website_backup.yml"', $output);
     $this->assertStringContainsString('--env-file "' . $expected_project_root . '.env"', $output);
     $this->assertStringContainsString('backup:s3 -f --notify', $output);
+
+    $this->assertStringContainsString('>> "' . $tmp_dir . '/website-backup-cron.log', $output, 'Assert troubleshooting cron entry');
   }
 
   public function testGenerateDefaults() {
