@@ -6,6 +6,11 @@ use AKlump\WebsiteBackup\Helper\MoveFileOrDirectory;
 use AKlump\WebsiteBackup\Helper\RemoveDirectoryTree;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @covers \AKlump\WebsiteBackup\Helper\MoveFileOrDirectory
+ * @uses \AKlump\WebsiteBackup\Helper\GetShortPath
+ * @uses \AKlump\WebsiteBackup\Helper\RemoveDirectoryTree
+ */
 class MoveFileOrDirectoryTest extends TestCase {
 
   private string $testDir;
@@ -56,22 +61,25 @@ class MoveFileOrDirectoryTest extends TestCase {
     // We can't easily make rename fail across filesystems in a simple test,
     // but we can mock the behavior if we use a subclass or a different approach.
     // For now, let's test the private methods directly or via a mock if needed.
-    
+
     $mover = new class extends MoveFileOrDirectory {
-        public bool $renameCalled = false;
-        public function __invoke(string $source, string $destination): void {
-            $this->renameCalled = true;
-            // Force fallback by not calling rename()
-            if (is_dir($source)) {
-                $method = new \ReflectionMethod(MoveFileOrDirectory::class, 'moveDirectory');
-                $method->setAccessible(true);
-                $method->invoke($this, $source, $destination);
-            } else {
-                $method = new \ReflectionMethod(MoveFileOrDirectory::class, 'moveFile');
-                $method->setAccessible(true);
-                $method->invoke($this, $source, $destination);
-            }
+
+      public bool $renameCalled = FALSE;
+
+      public function __invoke(string $source, string $destination): void {
+        $this->renameCalled = TRUE;
+        // Force fallback by not calling rename()
+        if (is_dir($source)) {
+          $method = new \ReflectionMethod(MoveFileOrDirectory::class, 'moveDirectory');
+          $method->setAccessible(TRUE);
+          $method->invoke($this, $source, $destination);
         }
+        else {
+          $method = new \ReflectionMethod(MoveFileOrDirectory::class, 'moveFile');
+          $method->setAccessible(TRUE);
+          $method->invoke($this, $source, $destination);
+        }
+      }
     };
 
     $mover($source, $destination);
@@ -89,11 +97,12 @@ class MoveFileOrDirectoryTest extends TestCase {
     file_put_contents($source . '/sub/file.txt', 'hello');
 
     $mover = new class extends MoveFileOrDirectory {
-        public function __invoke(string $source, string $destination): void {
-            $method = new \ReflectionMethod(MoveFileOrDirectory::class, 'moveDirectory');
-            $method->setAccessible(true);
-            $method->invoke($this, $source, $destination);
-        }
+
+      public function __invoke(string $source, string $destination): void {
+        $method = new \ReflectionMethod(MoveFileOrDirectory::class, 'moveDirectory');
+        $method->setAccessible(TRUE);
+        $method->invoke($this, $source, $destination);
+      }
     };
 
     $mover($source, $destination);

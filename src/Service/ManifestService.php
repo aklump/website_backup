@@ -2,7 +2,12 @@
 
 namespace AKlump\WebsiteBackup\Service;
 
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
+
 class ManifestService {
+
+  protected Filesystem $filesystem;
 
   private $configDir;
 
@@ -19,6 +24,7 @@ class ManifestService {
     $this->destination = rtrim($destination, '/');
     $this->projectRoot = rtrim($project_root, '/');
     $this->setManifest($manifest);
+    $this->filesystem = new Filesystem();
   }
 
   private function setManifest(array $manifest_items): void {
@@ -39,12 +45,13 @@ class ManifestService {
   public function resolve(string $pattern): array {
     $pattern = ltrim($pattern, '!');
     $paths = [];
-    if (strpos($pattern, '*') !== false) {
+    if (strpos($pattern, '*') !== FALSE) {
       $globbed = glob($pattern);
       if ($globbed) {
         $paths = $globbed;
       }
-    } elseif (file_exists($pattern)) {
+    }
+    elseif (file_exists($pattern)) {
       $paths[] = $pattern;
     }
 
@@ -106,7 +113,10 @@ class ManifestService {
       if (is_file($source)) {
         $dir = dirname($this->destination . '/' . $relative_path);
         $commands['mkdir'][$dir] = [$dir];
-        $commands['cp'][] = [$source, $this->destination . '/' . $relative_path];
+        $commands['cp'][] = [
+          $source,
+          $this->destination . '/' . $relative_path,
+        ];
       }
       elseif (is_dir($source)) {
         $dest_dir = $this->destination . '/' . $relative_path;
@@ -132,12 +142,15 @@ class ManifestService {
   }
 
   private function getRelativePath(string $path): string {
-    $real_path = realpath($path) ?: $path;
-    $real_config_dir = realpath($this->configDir) ?: $this->configDir;
+    $norm_path = Path::canonicalize($path);
+    if ($this->projectRoot) {
+      $norm_project_root = Path::canonicalize($this->projectRoot);
+      if (str_starts_with($norm_path, $norm_project_root)) {
+        return $this->filesystem->makePathRelative($norm_path, $norm_project_root);
+      }
+    }
 
-    $norm_path = preg_replace('|^/private/var/|', '/var/', $real_path);
-    $norm_config_dir = preg_replace('|^/private/var/|', '/var/', $real_config_dir);
-
+    $norm_config_dir = Path::canonicalize($this->configDir);
     if (str_starts_with($norm_path, $norm_config_dir)) {
       $relative = substr($norm_path, strlen($norm_config_dir));
 

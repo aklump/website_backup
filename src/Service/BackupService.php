@@ -49,9 +49,17 @@ class BackupService {
     $this->validateOptions($options, (bool) $local_path);
     $start_time = microtime(TRUE);
     try {
-      $object_name = $this->doRun($options, $local_path);
+      $result = $this->doRun($options, $local_path);
       if ($options & BackupOptions::NOTIFY) {
-        $this->sendNotification(TRUE, $local_path, $options, $start_time, $object_name, NULL);
+        $this->sendNotification(
+          TRUE,
+          $local_path,
+          $options,
+          $start_time,
+          $result['object_name'] ?? NULL,
+          NULL,
+          $result['artifact_size_bytes'] ?? NULL
+        );
       }
     }
     catch (\Exception $e) {
@@ -62,7 +70,7 @@ class BackupService {
     }
   }
 
-  private function doRun(int $options = 0, $local_path = ''): ?string {
+  private function doRun(int $options = 0, $local_path = ''): array {
     $move_file_or_directory = new MoveFileOrDirectory();
     $this->output->writeln('<info>Backing Up Your Website</info>');
 
@@ -188,6 +196,7 @@ class BackupService {
             (new RemoveFileOrSymlink())($destination);
           }
           $move_file_or_directory($final_artifact_path, $destination);
+          $final_artifact_path_for_notify = $destination;
           $this->output->writeln(sprintf(' <info>*</info> %s', ($this->getShortPath)($destination)));
 
           if ($latest) {
@@ -208,6 +217,7 @@ class BackupService {
           }
           $move_file_or_directory($staging_dir, $destination);
           $final_artifact_name_for_notify = $full_object_name;
+          $final_artifact_path_for_notify = $destination;
           $this->output->writeln(sprintf(' <info>*</info> %s', ($this->getShortPath)($destination)));
 
           if ($latest) {
@@ -291,6 +301,7 @@ class BackupService {
           $this->config['aws_secret_access_key']
         );
         $s3->upload($final_artifact_name, $final_artifact_path);
+        $final_artifact_path_for_notify = $final_artifact_path;
 
         $s3_link_builder = new S3LinkBuilder();
         $s3_uri = $s3_link_builder->buildS3Uri($this->config['aws_bucket'], $final_artifact_name);
@@ -306,14 +317,17 @@ class BackupService {
 
       $this->output->writeln('<info>Backup completed</info>');
 
-      return $final_artifact_name_for_notify;
+      return [
+        'object_name' => $final_artifact_name_for_notify,
+        'artifact_size_bytes' => $this->getArtifactSizeBytes($final_artifact_path_for_notify),
+      ];
     }
     finally {
       $this->tempDirectoryFactory->cleanup($temp_work_dir);
     }
   }
 
-  private function sendNotification(bool $success, $local_path, int $options, float $start_time, ?string $object_name, \Exception $exception = NULL): void {
+  private function sendNotification(bool $success, $local_path, int $options, float $start_time, ?string $object_name, \Exception $exception = NULL, ?int $artifact_size_bytes = NULL): void {
     $email_config = $this->config['notifications']['email'];
     $subject = $success ? $email_config['on_success']['subject'] : $email_config['on_fail']['subject'];
     $elapsed = round(microtime(TRUE) - $start_time, 2);
@@ -352,6 +366,9 @@ class BackupService {
     }
 
     $body .= "- Elapsed time: " . $elapsed . " seconds\n";
+    if ($artifact_size_bytes !== NULL) {
+      $body .= "- Artifact size: " . $this->formatBytes($artifact_size_bytes) . "\n";
+    }
     $body .= "- Options used:\n";
     $body .= "  - Database: " . ($has_database ? 'Yes' : 'No') . "\n";
     $body .= "  - Files: " . ($has_files ? 'Yes' : 'No') . "\n";
@@ -371,5 +388,41 @@ class BackupService {
     if (($options & BackupOptions::LATEST) && !$is_local) {
       throw new \InvalidArgumentException('The LATEST option may only be used with a local destination.');
     }
+  }
+
+  private function getArtifactSizeBytes(string $path): ?int {
+    if (is_file($path)) {
+      return filesize($path);
+    }
+    if (is_dir($path)) {
+      return $this->getDirectorySizeBytes($path);
+    }
+
+    return NULL;
+  }
+
+  private function getDirectorySizeBytes(string $directory): int {
+    $size = 0;
+    $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS));
+    foreach ($files as $file) {
+      $size += $file->getSize();
+    }
+
+    return $size;
+  }
+
+  private function formatBytes(int $bytes): string {
+    if ($bytes < 1024) {
+      return $bytes . ' B';
+    }
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $bytes = (float) $bytes;
+    $i = 0;
+    while ($bytes >= 1024 && $i < count($units) - 1) {
+      $bytes /= 1024;
+      $i++;
+    }
+
+    return round($bytes, 1) . ' ' . $units[$i] . ' (' . (int) round($bytes * pow(1024, $i)) . ' bytes)';
   }
 }

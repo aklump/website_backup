@@ -13,7 +13,9 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class BackupLocalCommand extends Command {
-use CommandTrait;
+
+  use CommandTrait;
+
   protected static $defaultName = 'backup:local';
 
   protected function configure(): void {
