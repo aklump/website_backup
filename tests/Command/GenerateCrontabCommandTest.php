@@ -50,7 +50,7 @@ class GenerateCrontabCommandTest extends TestCase {
     // Inputs: php_path, tmpdir
     $php_dir = dirname(PHP_BINARY);
     $tmp_dir = sys_get_temp_dir();
-    $command_tester->setInputs([$php_dir, $tmp_dir]);
+    $command_tester->setInputs([$tmp_dir, $php_dir]);
     $command_tester->execute([]);
 
     $output = $command_tester->getDisplay();
@@ -83,7 +83,7 @@ class GenerateCrontabCommandTest extends TestCase {
     $tmp_dir = sys_get_temp_dir();
 
     $this->assertStringContainsString('TMPDIR="' . $tmp_dir . '"', $output);
-    $this->assertStringContainsString('PATH="' . $php_dir . ':$PATH"', $output);
+    $this->assertStringNotContainsString('PATH="' . $php_dir . ':$PATH"', $output);
     $this->assertStringContainsString('vendor/bin/website-backup', $output);
   }
 
