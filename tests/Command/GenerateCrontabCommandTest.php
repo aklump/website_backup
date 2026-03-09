@@ -60,9 +60,9 @@ class GenerateCrontabCommandTest extends TestCase {
 
     $this->assertStringContainsString('TMPDIR="' . $tmp_dir . '"', $output);
     $this->assertStringContainsString('PATH="' . $php_dir . ':$PATH"', $output);
-    $this->assertStringContainsString($expected_project_root . 'vendor/bin/website-backup', $output);
-    $this->assertStringContainsString('--config ' . $expected_project_root . 'bin/config/website_backup.yml', $output);
-    $this->assertStringContainsString('--env-file ' . $expected_project_root . '.env', $output);
+    $this->assertStringContainsString('"' . $expected_project_root . 'vendor/bin/website-backup"', $output);
+    $this->assertStringContainsString('--config "' . $expected_project_root . 'bin/config/website_backup.yml"', $output);
+    $this->assertStringContainsString('--env-file "' . $expected_project_root . '.env"', $output);
     $this->assertStringContainsString('backup:s3 -f --notify', $output);
   }
 

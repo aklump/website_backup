@@ -49,25 +49,26 @@ class GenerateCrontabCommand extends Command {
       'In some cases it is necessary to include this in your crontab, but it is not recommended unless you experience issues with PHP versions.',
     ]);
     $php_path = $io->ask(sprintf('Enter path to PHP, or leave blank to skip', $php_path_default), NULL, function ($value) {
-      return trim($value) ? $this->directoryValidator($value) : '';
+      return trim((string) $value) ? $this->directoryValidator($value) : '';
     });
 
     $parts = [];
-    $parts[] = sprintf('TMPDIR="%s"', $tmpdir);
+    $parts[] = sprintf('TMPDIR="%s"', $this->escapeForDoubleQuotes($this->handleUserHome($tmpdir)));
 
     // Only hardcode PHP if it is set.
     if ($php_path) {
-      $parts[] = sprintf('PATH="%s:$PATH"', $php_path);
+      $parts[] = sprintf('PATH="%s:$PATH"', $this->escapeForDoubleQuotes($this->handleUserHome($php_path)));
     }
 
     // TODO This is brittle; move it
     $binary = $project_root . 'vendor/bin/website-backup';
 
-    $command = sprintf('0 3 * * * %s %s --config %s --env-file %s backup:s3 -f --notify --quiet',
+    $command = sprintf(
+      '0 3 * * * %s "%s" --config "%s" --env-file "%s" backup:s3 -f --notify --quiet',
       implode(' ', $parts),
-      $binary,
-      $loader->getConfigPath(),
-      $loader->getEnvPath(),
+      $this->escapeForDoubleQuotes($this->handleUserHome($binary)),
+      $this->escapeForDoubleQuotes($this->handleUserHome($loader->getConfigPath())),
+      $this->escapeForDoubleQuotes($this->handleUserHome($loader->getEnvPath())),
     );
 
     $io->section('Generated Crontab Entry');
@@ -88,6 +89,19 @@ class GenerateCrontabCommand extends Command {
     }
 
     return $value;
+  }
+
+  private function handleUserHome(string $path) {
+    $userhome = getenv('HOME');
+    if ($userhome && str_starts_with($path, $userhome)) {
+      return str_replace($userhome, '$HOME', $path);
+    }
+
+    return $path;
+  }
+
+  private function escapeForDoubleQuotes(string $value): string {
+    return str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
   }
 
 }
