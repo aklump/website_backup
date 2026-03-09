@@ -25,6 +25,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  * @uses \AKlump\WebsiteBackup\Service\TemporaryFileFactory
  * @uses \AKlump\WebsiteBackup\Service\S3Service
  * @uses \AKlump\WebsiteBackup\Helper\RemoveFileOrSymlink
+ * @uses \AKlump\WebsiteBackup\Helper\MoveFileOrDirectory
  */
 class BackupCommandTest extends TestCase {
 

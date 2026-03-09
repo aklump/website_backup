@@ -6,6 +6,10 @@ aws_region: us-west-1
 # retention policy, which deletes files.
 aws_bucket: example
 
+# The filename of the backup object that will be created.  The current
+# datetime will be appended.
+object_name: example
+
 # The AWS access key and secret key to use for the backup.
 aws_access_key_id: ${WEBSITE_BACKUP_AWS_ACCESS_KEY_ID}
 aws_secret_access_key: ${WEBSITE_BACKUP_AWS_SECRET_ACCESS_KEY}
@@ -20,10 +24,6 @@ aws_retention:
   # After the monthly window, keep the latest backup of each year for N additional years.
   keep_latest_yearly_for_years: 3
 
-# The filename of the backup object that will be created.  The current
-# datetime will be appended.
-object_name: example
-
 # List of file/folder paths to include in the backup, preceed a path with ! to
 # indicate the path should be excluded.  Relative paths are relative to this
 # configuration file.  You may use ${PROJECT_ROOT} to anchor a path to the
@@ -32,6 +32,8 @@ object_name: example
 manifest:
   - ${PROJECT_ROOT}/web/sites/*/files/
   - "!${PROJECT_ROOT}/web/sites/*/files/styles/"
+  - "!${PROJECT_ROOT}/web/sites/*/files/js/"
+  - "!${PROJECT_ROOT}/web/sites/*/files/css/"
   - ${PROJECT_ROOT}/private/*/files/
   - "!${PROJECT_ROOT}/private/*/files/tmp/"
   - ${PROJECT_ROOT}/web/sites/*/README.*

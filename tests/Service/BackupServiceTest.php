@@ -25,6 +25,7 @@ use Symfony\Component\Process\Process;
  * @uses \AKlump\WebsiteBackup\Service\ManifestService
  * @uses \AKlump\WebsiteBackup\Service\S3Service
  * @uses \AKlump\WebsiteBackup\Helper\S3LinkBuilder
+ * @uses \AKlump\WebsiteBackup\Helper\MoveFileOrDirectory
  */
 class BackupServiceTest extends TestCase {
 
