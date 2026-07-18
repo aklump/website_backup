@@ -3,3 +3,5 @@ feat
 composer.lock
 .env
 .phpswap
+.idea/
+todo.md
