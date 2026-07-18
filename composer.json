@@ -10,12 +10,12 @@
   ],
   "require": {
     "php": ">=7.4",
-    "symfony/console": "^5.4 || ^6.0 || ^7.0",
-    "symfony/yaml": "^5.4 || ^6.0 || ^7.0",
-    "symfony/process": "^5.4 || ^6.0 || ^7.0",
-    "symfony/dotenv": "^5.4 || ^6.0 || ^7.0",
+    "symfony/console": "^5.4 || ^6.4 || ^7.4 || ^8.0",
+    "symfony/yaml": "^5.4 || ^6.4 || ^7.4 || ^8.0",
+    "symfony/process": "^5.4 || ^6.4 || ^7.4 || ^8.0",
+    "symfony/dotenv": "^5.4 || ^6.4 || ^7.4 || ^8.0",
     "aws/aws-sdk-php": "^3.104",
-    "symfony/filesystem": "^5.4 || ^6.0 || ^7.0"
+    "symfony/filesystem": "^5.4 || ^6.4 || ^7.4 || ^8.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5 || ^10.0 || ^11.0"
@@ -27,7 +27,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "AKlump\\WebsiteBackup\\Tests\\": "tests/"
+      "AKlump\\WebsiteBackup\\Tests\\": "tests_phpunit/src/"
     }
   },
   "bin": [
