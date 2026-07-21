@@ -16,23 +16,25 @@ A backup can include:
 
 The tool is designed for repeatable CLI use with configuration in YAML and secrets supplied by environment variables.
 
-## Install with Composer
+##        Install with Composer
 
-1. Because this is an unpublished package, you must define it's repository in
-   your project's _composer.json_ file. Add the following to _composer.json_ in
-   the `repositories` array:
+1. Installation requires explicit repositories:
    
-    ```json
-    {
-     "type": "github",
-     "url": "https://github.com/aklump/website_backup"
-    }
-    ```
-1. Require this package:
+   ```shell
+   composer config repositories.ffb09ebe4f72b70f6c560581c79aa3d0 github https://github.com/aklump/website_backup
+   ```
+
+2. Require the latest stable version:
    
-    ```
-    composer require aklump/website-backup:^0.1
-    ```
+   ```shell
+   composer require aklump/website-backup:^0.1
+   ```
+3. ... or require the dev channel:
+   
+   ```shell
+   composer config minimum-stability dev
+   composer require aklump/website-backup:@dev
+   ```
 
 ## Quick Start
 
